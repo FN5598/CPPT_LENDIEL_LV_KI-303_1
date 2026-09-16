@@ -10,11 +10,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Reads and validates laboratory data about medicines and prints summary statistics.
+ */
 public class Lab01Application {
 
-    private static final String DATA_CSV_PATH = "../../../../../../resources/lab01/Data.csv";
+    private static final String DATA_CSV_PATH = "/lab01/Data.csv";
     private static final String ERROR_TXT_PATH = "./Errors.txt";
 
+    /**
+     * Loads the CSV data, validates each row, calculates summary statistics, and
+     * writes validation errors to {@value #ERROR_TXT_PATH} when necessary.
+     *
+     * @param args command-line arguments; this application does not require any
+     */
     public static void main(String[] args) {
         List<String> errors = new ArrayList<>();
         double totalPrice = 0;
@@ -93,13 +102,30 @@ public class Lab01Application {
         }
     }
 
+    /**
+     * Reads the laboratory CSV file from the application classpath.
+     *
+     * @return one CSV row per array element
+     * @throws IOException if the resource cannot be read
+     */
     public static String[] getData() throws IOException {
-        return Files.readAllLines(
-                Path.of(DATA_CSV_PATH),
-                StandardCharsets.UTF_8
-        ).toArray(String[]::new);
+        try (var input = Lab01Application.class.getResourceAsStream(DATA_CSV_PATH)) {
+            if (input == null) {
+                throw new NoSuchFileException(DATA_CSV_PATH);
+            }
+
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8)
+                    .lines()
+                    .toArray(String[]::new);
+        }
     }
 
+    /**
+     * Reports an unrecoverable I/O error and terminates the application.
+     *
+     * @param message human-readable description of the failure
+     * @param cause exception that caused the failure
+     */
     private static void fail(String message, Exception cause) {
         System.err.println("Fatal error: " + message);
         System.err.println(cause.getMessage());
