@@ -33,7 +33,7 @@ class Lab01ApplicationTest {
             "Name;Form;3.4;1;true",
             "Pantheon;Form;3.2;5;false",
             "Name;asdasd asda s;3.4;2;true",
-            "Name;asdasd asda s;3;12;false"
+            "Name;asdasd asda s;3;12;true"
         }, java.util.Arrays.copyOf(data, 5));
         assertTrue(data[5].startsWith("Name;asdasd asda s;"));
     }
