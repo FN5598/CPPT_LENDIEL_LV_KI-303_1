@@ -1,26 +1,9 @@
 name: CI
 
 on:
-    push:
-        paths:
-            - "src/main/java/**/lab0*/**"
-            - "src/main/resources/lab0*/**"
-            - "src/test/**/lab0*/**"
-            - "pom.xml"
-            - "mvnw"
-            - "mvnw.cmd"
-            - ".mvn/**"
-            - ".github/workflows/ci.yml"
     pull_request:
-        paths:
-            - "src/main/java/**/lab0*/**"
-            - "src/main/resources/lab0*/**"
-            - "src/test/**/lab0*/**"
-            - "pom.xml"
-            - "mvnw"
-            - "mvnw.cmd"
-            - ".mvn/**"
-            - ".github/workflows/ci.yml"
+        branches:
+            - main
 
 permissions:
     contents: read
