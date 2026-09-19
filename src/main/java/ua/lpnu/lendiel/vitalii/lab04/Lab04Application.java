@@ -75,7 +75,7 @@ public final class Lab04Application {
 
         printStreamResults(expirationDateUntilThirtyDaysCount, names, countByForm,
                 topFiveSmallestDaysToExpireNames,
-                nameLookup);
+                priceStatistics, nameLookup);
     }
 
     /**
@@ -231,13 +231,19 @@ public final class Lab04Application {
      * @param namesMap names produced by the mapping query
      * @param countByForm counts produced by the grouping query
      * @param topFiveSmallestDaysToExpireNames names produced by the top-five query
+     * @param priceStatistics statistics produced by the price query
      * @param nameLookup optional result of the name lookup
      */
     private static void printStreamResults(long expirationDateUntillThirtyDaysCount, List<String> namesMap,
             Map<MedicineForm, Long> countByForm, List<String> topFiveSmallestDaysToExpireNames,
-            Optional<Medicine> nameLookup) {
+            DoubleSummaryStatistics priceStatistics, Optional<Medicine> nameLookup) {
         System.out.printf(Locale.ROOT, "%nMedicines that expire within 30 days: %d%n",
                 expirationDateUntillThirtyDaysCount);
+        System.out.printf(Locale.ROOT,
+                "Price statistics: count=%d, sum=%.2f, average=%.2f, min=%.2f, max=%.2f%n",
+                priceStatistics.getCount(), priceStatistics.getSum(),
+                priceStatistics.getAverage(), priceStatistics.getMin(),
+                priceStatistics.getMax());
         System.out.printf(Locale.ROOT, "Names of all medicines: %s%n", formatList(namesMap));
         System.out.printf(Locale.ROOT,
                 "%nTop Five Medicine names with least expiration time: %s%n",

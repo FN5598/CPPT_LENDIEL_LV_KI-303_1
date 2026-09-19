@@ -122,6 +122,8 @@ class Lab04ApplicationTest {
         assertTrue(output.contains("Errors: 0"));
         assertTrue(output.contains("Medicines that expire within 30 days: 9"));
         assertTrue(output.contains(
+                "Price statistics: count=10, sum=44.40, average=4.44, min=3.00, max=6.20"));
+        assertTrue(output.contains(
                 "Names of all medicines: {Indian, Pakistani, Pantheon, Infinity, "
                         + "Doubledown, Decrease, Beyond, Alpha, Beta, Indian}"));
         assertTrue(output.contains(

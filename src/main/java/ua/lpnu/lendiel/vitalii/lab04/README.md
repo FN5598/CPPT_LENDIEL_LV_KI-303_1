@@ -74,6 +74,7 @@ Total medicines that had prescription: 6
 Total correct rows: 10
 Errors: 0
 Medicines that expire within 30 days: 9
+Price statistics: count=10, sum=44.40, average=4.44, min=3.00, max=6.20
 Names of all medicines: {Indian, Pakistani, Pantheon, Infinity, Doubledown, Decrease, Beyond, Alpha, Beta, Indian}
 Top Five Medicine names with least expiration time: {Pakistani, Indian, Infinity, Alpha, Beta}
 PILLS -> 4

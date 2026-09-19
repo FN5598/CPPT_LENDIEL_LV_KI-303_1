@@ -80,6 +80,11 @@ For the supplied dataset, the application produces:
 | Correct rows | `10` |
 | Error rows | `0` |
 | Medicines expiring within 30 days | `9` |
+| Price count | `10` |
+| Price sum | `44.40` |
+| Average price | `4.44` |
+| Minimum price | `3.00` |
+| Maximum price | `6.20` |
 | Pills | `4` |
 | Liquid medicines | `6` |
 
