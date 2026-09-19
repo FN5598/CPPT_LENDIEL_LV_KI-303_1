@@ -19,120 +19,132 @@ import org.junit.jupiter.api.Test;
 
 class Lab03ApplicationTest {
 
-    @Test
-    void parsesTheExistingCsvFormatIntoConcreteSubtypes() {
-        Medicine prescription = MedicineFactory.fromCsv("Aspirin;Pills;12.50;30;TRUE");
-        Medicine freeSale = MedicineFactory.fromCsv("Vitamin;Liquid;5;7;false");
+        @Test
+        void parsesTheCsvFormatIntoConcreteSubtypes() {
+                Medicine pills = MedicineFactory.fromCsv("Aspirin;Pills;12.50;30;TRUE");
+                Medicine liquid = MedicineFactory.fromCsv("Vitamin;Liquid;5;7;false");
 
-        assertTrue(prescription instanceof PrescriptionMedicine);
-        assertTrue(freeSale instanceof FreeMedicine);
-        assertEquals(MedicineKind.PRESCRIPTION, prescription.getKind());
-        assertEquals(MedicineKind.FREE_SALE, freeSale.getKind());
-        assertTrue(prescription.getIsPrescription());
-        assertFalse(freeSale.getIsPrescription());
-        assertEquals("Aspirin;Pills;12.50;30;true", prescription.toString());
-        assertEquals("Vitamin;Liquid;5.00;7;false", freeSale.toString());
-    }
+                assertTrue(pills instanceof PillsMedicine);
+                assertTrue(liquid instanceof LiquidMedicine);
+                assertEquals(MedicineForm.PILLS, pills.getForm());
+                assertEquals(MedicineForm.LIQUID, liquid.getForm());
+                assertTrue(pills.requiresPrescription());
+                assertFalse(liquid.requiresPrescription());
+                assertEquals("Aspirin;Pills;12.50;30;true", pills.toString());
+                assertEquals("Vitamin;Liquid;5.00;7;false", liquid.toString());
+        }
 
-    @Test
-    void validatesSharedFieldsInTheBaseType() {
-        assertThrows(NullPointerException.class,
-                () -> new FreeMedicine(null, "Pills", 5, 7));
-        assertThrows(IllegalArgumentException.class,
-                () -> new FreeMedicine("", "Pills", 5, 7));
-        assertThrows(IllegalArgumentException.class,
-                () -> new FreeMedicine("Medicine", "Capsule", 5, 7));
-        assertThrows(IllegalArgumentException.class,
-                () -> new FreeMedicine("Medicine", "Pills", -1, 7));
-        assertThrows(IllegalArgumentException.class,
-                () -> new FreeMedicine("Medicine", "Pills", 5, -1));
-    }
+        @Test
+        void validatesSharedFieldsInTheBaseType() {
+                assertThrows(NullPointerException.class,
+                                () -> new PillsMedicine(null, 5, 7, false));
+                assertThrows(IllegalArgumentException.class,
+                                () -> MedicineFactory.fromCsv("Medicine; ;5;7;false"));
+                assertThrows(IllegalArgumentException.class,
+                                () -> new PillsMedicine("", 5, 7, false));
+                assertThrows(IllegalArgumentException.class,
+                                () -> new PillsMedicine("Medicine", -1, 7, false));
+                assertThrows(IllegalArgumentException.class,
+                                () -> new PillsMedicine("Medicine", 5, -1, false));
+                assertThrows(IllegalArgumentException.class,
+                                () -> new PillsMedicine("Medicine", Double.NaN, 7, false));
+        }
 
-    @Test
-    void parsesAndValidatesMedicineKind() {
-        assertEquals(MedicineKind.PRESCRIPTION, MedicineKind.fromCsvValue(" TRUE "));
-        assertEquals(MedicineKind.FREE_SALE, MedicineKind.fromCsvValue("false"));
-        assertTrue(MedicineKind.PRESCRIPTION.requiresPrescription());
-        assertFalse(MedicineKind.FREE_SALE.requiresPrescription());
-        assertThrows(IllegalArgumentException.class,
-                () -> MedicineKind.fromCsvValue("unknown"));
-    }
+        @Test
+        void parsesMedicineFormsFromCsvValues() {
+                assertEquals(MedicineForm.PILLS, MedicineForm.fromCsvValue(" PILLS "));
+                assertEquals(MedicineForm.LIQUID, MedicineForm.fromCsvValue("liquid"));
+                assertEquals("Pills", MedicineForm.PILLS.toCsvValue());
+                assertEquals("Liquid", MedicineForm.LIQUID.toCsvValue());
+                assertThrows(IllegalArgumentException.class,
+                                () -> MedicineForm.fromCsvValue("Capsule"));
+        }
 
-    @Test
-    void evaluatesAvailabilityPolymorphicallyThroughTheCommonType() {
-        List<Medicine> medicines = List.of(
-                new PrescriptionMedicine("Prescription", "Pills", 10, 3),
-                new FreeMedicine("Free sale", "Liquid", 5, 3),
-                new FreeMedicine("Expired", "Pills", 5, 0));
+        @Test
+        void evaluatesAvailabilityUsingTheCommonPrescriptionRule() {
+                List<Medicine> medicines = List.of(
+                                new PillsMedicine("Prescription", 10, 3, true),
+                                new LiquidMedicine("Over the counter", 5, 3, false),
+                                new LiquidMedicine("Expired", 5, 0, false));
 
-        assertTrue(medicines.get(0).isAvailable(true));
-        assertFalse(medicines.get(0).isAvailable(false));
-        assertTrue(medicines.get(1).isAvailable(false));
-        assertFalse(medicines.get(2).isAvailable(true));
-    }
+                assertTrue(medicines.get(0).isAvailable(true));
+                assertFalse(medicines.get(0).isAvailable(false));
+                assertTrue(medicines.get(1).isAvailable(false));
+                assertFalse(medicines.get(2).isAvailable(true));
+                assertTrue(medicines.get(0).requiresPrescription());
+                assertFalse(medicines.get(1).requiresPrescription());
+                assertFalse(medicines.get(2).requiresPrescription());
+        }
 
-    @Test
-    void equalsAndHashCodeWorkInHashSet() {
-        Medicine first = new FreeMedicine("Vitamin", "Liquid", 5, 7);
-        Medicine same = new FreeMedicine("Vitamin", "Liquid", 5, 7);
-        Medicine different = new FreeMedicine("Vitamin", "Liquid", 6, 7);
+        @Test
+        void equalsAndHashCodeWorkInHashSet() {
+                Medicine first = new LiquidMedicine("Vitamin", 5, 7, false);
+                Medicine same = new LiquidMedicine("Vitamin", 5, 7, false);
+                Medicine different = new PillsMedicine("Vitamin", 5, 7, false);
 
-        Set<Medicine> medicines = new HashSet<>(List.of(first, same, different));
+                Set<Medicine> medicines = new HashSet<>(List.of(first, same, different));
 
-        assertEquals(first, same);
-        assertEquals(first.hashCode(), same.hashCode());
-        assertNotEquals(first, different);
-        assertEquals(2, medicines.size());
-    }
+                assertEquals(first, same);
+                assertEquals(first.hashCode(), same.hashCode());
+                assertNotEquals(first, different);
+                assertEquals(2, medicines.size());
+        }
 
-    @Test
-    void rejectsMalformedRowsWithoutChangingTheInputContract() {
-        assertThrows(NullPointerException.class, () -> MedicineFactory.fromCsv(null));
-        assertThrows(IllegalArgumentException.class,
-                () -> MedicineFactory.fromCsv("Medicine;Pills;5;7"));
-        assertThrows(IllegalArgumentException.class,
-                () -> MedicineFactory.fromCsv("Medicine;Pills;cost;7;false"));
-        assertThrows(IllegalArgumentException.class,
-                () -> MedicineFactory.fromCsv("Medicine;Pills;5;7;unknown"));
-    }
+        @Test
+        void rejectsMalformedRowsBeforeCreatingObjects() {
+                assertThrows(NullPointerException.class, () -> MedicineFactory.fromCsv(null));
+                assertThrows(IllegalArgumentException.class,
+                                () -> MedicineFactory.fromCsv("Medicine;Pills;5;7"));
+                assertThrows(IllegalArgumentException.class,
+                                () -> MedicineFactory.fromCsv("Medicine;Capsule;5;7;false"));
+                assertThrows(IllegalArgumentException.class,
+                                () -> MedicineFactory.fromCsv("Medicine;Pills; ;7;false"));
+                assertThrows(IllegalArgumentException.class,
+                                () -> MedicineFactory.fromCsv("Medicine;Pills;5;7;unknown"));
+        }
 
-    @Test
-    void loadsTheSharedClasspathData() throws IOException {
-        String[] data = Lab03Application.getData("/lab01/Data.csv");
+        @Test
+        void loadsTheExpandedClasspathData() throws IOException {
+                String[] data = Lab03Application.getData("/lab01/Data.csv");
 
-        assertEquals(6, data.length);
-        assertArrayEquals(new String[] {
-                "Indian;Pills;5.2;2;false",
-                "Pakistani;Pills;3.4;1;true",
-                "Pantheon;Liquid;3.2;5;false",
-                "Infinity;Liquid;3.4;2;true",
-                "Doubledown;Pills;3;12;true",
-                "Decrease;Liquid;  ;   ;  "
-        }, data);
-        assertThrows(NoSuchFileException.class,
-                () -> Lab03Application.getData("/lab03/missing.csv"));
-    }
+                assertEquals(10, data.length);
+                assertArrayEquals(new String[] {
+                                "Indian;Pills;5.2;2;false",
+                                "Pakistani;Pills;3.4;1;true",
+                                "Pantheon;Liquid;3.2;5;false",
+                                "Infinity;Liquid;3.4;2;true",
+                                "Doubledown;Pills;3;12;true",
+                                "Decrease;Liquid;4.1;30;false",
+                                "Beyond;Pills;6.2;31;true",
+                                "Alpha;Liquid;4.8;5;false",
+                                "Beta;Liquid;5.1;5;true",
+                                "Indian;Liquid;6.0;20;true"
+                }, data);
+                assertThrows(NoSuchFileException.class,
+                                () -> Lab03Application.getData("/lab03/missing.csv"));
+        }
 
-    @Test
-    void printsTheLab02CompatibleReport() throws Exception {
-        Path javaExecutable = Path.of(System.getProperty("java.home"), "bin",
-                System.getProperty("os.name").toLowerCase().contains("win")
-                        ? "java.exe" : "java");
-        Process process = new ProcessBuilder(
-                javaExecutable.toString(),
-                "-cp",
-                System.getProperty("java.class.path"),
-                Lab03Application.class.getName())
-                .redirectErrorStream(true)
-                .start();
+        @Test
+        void printsTheUpdatedReport() throws Exception {
+                Path javaExecutable = Path.of(System.getProperty("java.home"), "bin",
+                                System.getProperty("os.name").toLowerCase().contains("win")
+                                                ? "java.exe"
+                                                : "java");
+                Process process = new ProcessBuilder(
+                                javaExecutable.toString(),
+                                "-cp",
+                                System.getProperty("java.class.path"),
+                                Lab03Application.class.getName())
+                                .redirectErrorStream(true)
+                                .start();
 
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        assertEquals(0, process.waitFor());
-        assertTrue(output.contains("Average medicine price: 3.64"));
-        assertTrue(output.contains("Shortest medicine expiration period: 1"));
-        assertTrue(output.contains("Total medicines that had prescription: 3"));
-        assertTrue(output.contains("Total correct rows: 5"));
-        assertTrue(output.contains("Errors: 1"));
-    }
+                assertEquals(0, process.waitFor());
+                assertTrue(output.contains("Average medicine price: 4.44"));
+                assertTrue(output.contains("Shortest medicine expiration period: 1"));
+                assertTrue(output.contains("Total medicines that had prescription: 6"));
+                assertTrue(output.contains("Total correct rows: 10"));
+                assertTrue(output.contains("Errors: 0"));
+        }
 }

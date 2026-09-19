@@ -10,8 +10,7 @@ import java.util.Locale;
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
 
 /**
- * Reads medicine rows into a polymorphic model and prints the Lab 02-compatible
- * summary report.
+ * Reads medicine rows into a polymorphic model and prints a summary report.
  */
 public final class Lab03Application {
     private static final String DATA_CSV_PATH = "/lab01/Data.csv";
@@ -20,8 +19,7 @@ public final class Lab03Application {
     }
 
     /**
-     * Loads the medicine resource, processes every valid row through the common
-     * {@link Medicine} type, and prints the existing summary format.
+     * Loads the medicine resource, validates every row, and prints the summary.
      *
      * @param args command-line arguments; no arguments are required
      */
@@ -47,7 +45,7 @@ public final class Lab03Application {
                 medicines.add(medicine);
                 totalPrice += medicine.getPrice();
                 shortestExpirationPeriod = Math.min(shortestExpirationPeriod,
-                        medicine.getDaysToExpire());
+                        medicine.getExpirationDays());
                 if (medicine.requiresPrescription()) {
                     prescriptionCount++;
                 }

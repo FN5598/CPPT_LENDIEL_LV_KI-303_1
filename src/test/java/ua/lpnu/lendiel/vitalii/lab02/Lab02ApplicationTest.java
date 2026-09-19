@@ -75,14 +75,18 @@ class Lab02ApplicationTest {
     void loadsCsvDataFromClasspath() throws IOException {
         String[] data = loadData("/lab01/Data.csv");
 
-        assertEquals(6, data.length);
+        assertEquals(10, data.length);
         assertArrayEquals(new String[] {
                 "Indian;Pills;5.2;2;false",
                 "Pakistani;Pills;3.4;1;true",
                 "Pantheon;Liquid;3.2;5;false",
                 "Infinity;Liquid;3.4;2;true",
                 "Doubledown;Pills;3;12;true",
-                "Decrease;Liquid;  ;   ;  "
+                "Decrease;Liquid;4.1;30;false",
+                "Beyond;Pills;6.2;31;true",
+                "Alpha;Liquid;4.8;5;false",
+                "Beta;Liquid;5.1;5;true",
+                "Indian;Liquid;6.0;20;true"
         }, data);
         assertThrows(NoSuchFileException.class, () -> loadData("/lab02/missing.csv"));
     }
@@ -103,12 +107,11 @@ class Lab02ApplicationTest {
 
         assertEquals(0, process.waitFor());
         assertAll(
-                () -> assertTrue(output.contains("Average medicine price: 3.64")),
+                () -> assertTrue(output.contains("Average medicine price: 4.44")),
                 () -> assertTrue(output.contains("Shortest medicine expiration period: 1")),
-                () -> assertTrue(output.contains("Total medicines that had prescription: 3")),
-                () -> assertTrue(output.contains("Total correct rows: 5")),
-                () -> assertTrue(output.contains("Errors: 1")),
-                () -> assertTrue(output.contains("Numerical field has incorrect format.")));
+                () -> assertTrue(output.contains("Total medicines that had prescription: 6")),
+                () -> assertTrue(output.contains("Total correct rows: 10")),
+                () -> assertTrue(output.contains("Errors: 0")));
     }
 
     private static Object parseMedicine(String line) {

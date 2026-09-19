@@ -2,6 +2,7 @@ package ua.lpnu.lendiel.vitalii.lab01;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -27,14 +28,18 @@ class Lab01ApplicationTest {
     void loadsCsvDataFromResources() throws IOException {
         String[] data = Lab01Application.getData();
 
-        assertEquals(6, data.length);
+        assertEquals(10, data.length);
         assertArrayEquals(new String[] {
             "Indian;Pills;5.2;2;false",
             "Pakistani;Pills;3.4;1;true",
             "Pantheon;Liquid;3.2;5;false",
             "Infinity;Liquid;3.4;2;true",
             "Doubledown;Pills;3;12;true",
-            "Decrease;Liquid;  ;   ;  "
+            "Decrease;Liquid;4.1;30;false",
+            "Beyond;Pills;6.2;31;true",
+            "Alpha;Liquid;4.8;5;false",
+            "Beta;Liquid;5.1;5;true",
+            "Indian;Liquid;6.0;20;true"
         }, data);
     }
 
@@ -51,10 +56,10 @@ class Lab01ApplicationTest {
         }
 
         String result = output.toString(StandardCharsets.UTF_8);
-        assertTrue(result.contains("Average price: 3.64"));
-        assertTrue(result.contains("Prescription count: 3"));
+        assertTrue(result.contains("Average price: 4.44"));
+        assertTrue(result.contains("Prescription count: 6"));
         assertTrue(result.contains("Shortest expiration period: 1"));
-        assertTrue(result.contains("Total Rows: 5"));
-        assertTrue(result.contains("Invalid number format"));
+        assertTrue(result.contains("Total Rows: 10"));
+        assertFalse(result.contains("Errors:"));
     }
 }

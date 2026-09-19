@@ -3,48 +3,44 @@
 ## Topic and variant
 
 This laboratory work extends the medicine domain model for variant 11 using
-inheritance, an enum, polymorphism, and value-based equality.
+inheritance, an enum for medicine form, polymorphism, and value-based equality.
 
 ## Class model
 
 ```text
 Medicine (abstract)
-├── PrescriptionMedicine
-└── FreeMedicine
+├── PillsMedicine
+└── LiquidMedicine
 
-MedicineKind (enum)
+MedicineForm (enum)
 ```
 
-`Medicine` stores the shared fields `name`, `form`, `price`, and
-`daysToExpire`, together with the prescription flag and `MedicineKind` category.
-It enforces the common validation rules.
-`PrescriptionMedicine` and `FreeMedicine` provide different implementations of
-`isAvailable(boolean prescriptionProvided)`.
+`Medicine` stores the common fields `name`, `form`, `price`,
+`expirationDays`, and the prescription boolean from the CSV row. `MedicineForm`
+represents the physical form as `PILLS` or `LIQUID`.
 
-The application stores both subtypes in `List<Medicine>`. Report generation
-uses only the common type and does not branch on a concrete subtype. Adding a
-new subtype therefore does not require rewriting the reporting code.
+`PillsMedicine` and `LiquidMedicine` set the form-specific enum value through
+the base constructor. The common `Medicine` implementation handles the
+prescription rule, so the subclasses do not duplicate prescription checks.
+The application processes both subtypes through `List<Medicine>`.
 
-`MedicineKind` represents the prescription category with explicit values
-`PRESCRIPTION` and `FREE_SALE`. The form remains the separate `Pills` or
-`Liquid` field. The final CSV field remains the `true`/`false` prescription flag
-and is stored in the base `Medicine` object, so the format remains compatible
-with Lab 02.
+`MedicineFactory` uses the form value to select `PillsMedicine` or
+`LiquidMedicine` and passes the final CSV boolean into the base `Medicine`
+object.
 
-`Medicine.equals()` and `Medicine.hashCode()` use the concrete type and all
-shared identity fields. This keeps equal objects interchangeable in
-`HashSet` and `HashMap` collections.
+## Input data
 
-## Input and output compatibility
-
-The input resource remains [`Data.csv`](../../../../../../resources/lab01/Data.csv)
+The input resource is [`Data.csv`](../../../../../../resources/lab01/Data.csv)
 with this format:
 
 ```text
-name;form;price;daysToExpire;prescription
+name;form;price;expirationDays;prescription
 ```
 
-The summary labels and calculated values remain compatible with Lab 02.
+The dataset contains ten valid records and covers both forms, both subtypes,
+expiration boundaries at 30 and 31 days, duplicate names, and different prices.
+Malformed rows are tested directly through `MedicineFactory` instead of being
+included in the production resource.
 
 ## Build and run
 
@@ -54,6 +50,6 @@ The summary labels and calculated values remain compatible with Lab 02.
 java -cp target/classes ua.lpnu.lendiel.vitalii.lab03.Lab03Application
 ```
 
-Expected statistics for the supplied data are an average price of `3.64`, a
-shortest expiration period of `1`, three prescription medicines, five valid
-rows, and one invalid row.
+Expected statistics for the supplied data are an average price of `4.44`, a
+shortest expiration period of `1`, six prescription medicines, ten valid rows,
+and zero invalid rows.
