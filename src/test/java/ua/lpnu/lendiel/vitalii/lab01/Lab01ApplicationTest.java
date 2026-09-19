@@ -29,13 +29,13 @@ class Lab01ApplicationTest {
 
         assertEquals(6, data.length);
         assertArrayEquals(new String[] {
-            "Name;Form;5.2;2;false",
-            "Name;Form;3.4;1;true",
-            "Pantheon;Form;3.2;5;false",
-            "Name;asdasd asda s;3.4;2;true",
-            "Name;asdasd asda s;3;12;true"
-        }, java.util.Arrays.copyOf(data, 5));
-        assertTrue(data[5].startsWith("Name;asdasd asda s;"));
+            "Indian;Pills;5.2;2;false",
+            "Pakistani;Pills;3.4;1;true",
+            "Pantheon;Liquid;3.2;5;false",
+            "Infinity;Liquid;3.4;2;true",
+            "Doubledown;Pills;3;12;true",
+            "Decrease;Liquid;  ;   ;  "
+        }, data);
     }
 
     @Test
