@@ -101,7 +101,7 @@ public final class Lab02Application {
 
         @Override
         public String toString() {
-            return String.format(Locale.ROOT, "%.2f: average price\n %d: shortest expiration period\n %d: medicines with prescription");
+            return String.format(Locale.ROOT, "%.2f: average price%n %d: shortest expiration period%n %d: medicines with prescription");
         }
     }
 
@@ -192,12 +192,12 @@ public final class Lab02Application {
 
         MedicineInformationSummary summary = new MedicineInformationSummary(averagePrice, shortestExpirationPeriod, prescriptionCount);
 
-        System.out.printf(Locale.ROOT, "Average medicine price: %.2f\n", summary.averagePrice());
-        System.out.printf(Locale.ROOT, "Shortest medicine expiration period: %d\n", summary.shortestExpirationPeriod());
-        System.out.printf(Locale.ROOT, "Total medicines that had prescription: %d\n", summary.prescriptionCount());
-        System.out.printf(Locale.ROOT, "Total correct rows: %d\n", summaryOutput.size());
+        System.out.printf(Locale.ROOT, "Average medicine price: %.2f%n", summary.averagePrice());
+        System.out.printf(Locale.ROOT, "Shortest medicine expiration period: %d%n", summary.shortestExpirationPeriod());
+        System.out.printf(Locale.ROOT, "Total medicines that had prescription: %d%n", summary.prescriptionCount());
+        System.out.printf(Locale.ROOT, "Total correct rows: %d%n", summaryOutput.size());
 
-        System.out.printf(Locale.ROOT, "\n\n\nErrors: %d%n", errors.size());
+        System.out.printf(Locale.ROOT, "%n%n%nErrors: %d%n", errors.size());
         errors.forEach(System.out::println);
     }
 }
