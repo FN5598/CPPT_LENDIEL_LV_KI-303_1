@@ -19,10 +19,18 @@ public class Lab01Application {
     private static final String ERROR_TXT_PATH = "./Errors.txt";
 
     /**
+     * Creates an application instance.
+     */
+    public Lab01Application() {
+    }
+
+    /**
      * Loads the CSV data, validates each row, calculates summary statistics, and
-     * writes validation errors to {@value #ERROR_TXT_PATH} when necessary.
+     * prints the results to standard output. Validation errors are also written
+     * to {@value #ERROR_TXT_PATH} when present.
      *
-     * @param args command-line arguments; this application does not require any
+     * @param args command-line arguments; the application does not require any
+     *             arguments
      */
     public static void main(String[] args) {
         List<String> errors = new ArrayList<>();
@@ -103,10 +111,11 @@ public class Lab01Application {
     }
 
     /**
-     * Reads the laboratory CSV file from the application classpath.
+     * Reads the laboratory CSV file from the application classpath as UTF-8
+     * text.
      *
-     * @return one CSV row per array element
-     * @throws IOException if the resource cannot be read
+     * @return an array containing one CSV row per element
+     * @throws IOException if the resource is missing or cannot be read
      */
     public static String[] getData() throws IOException {
         try (var input = Lab01Application.class.getResourceAsStream(DATA_CSV_PATH)) {
@@ -125,6 +134,8 @@ public class Lab01Application {
      *
      * @param message human-readable description of the failure
      * @param cause exception that caused the failure
+     * @implNote This method writes the error to standard error and exits the
+     *           process with status code {@code 1}; it does not return.
      */
     private static void fail(String message, Exception cause) {
         System.err.println("Fatal error: " + message);

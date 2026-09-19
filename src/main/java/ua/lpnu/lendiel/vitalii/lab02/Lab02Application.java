@@ -15,9 +15,16 @@ import java.util.Objects;
 
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
 
+/**
+ * Reads, validates, and summarizes medicine data from a classpath CSV resource.
+ *
+ * <p>The application prints summary statistics and validation errors to standard
+ * output. It does not accept command-line arguments.</p>
+ */
 public final class Lab02Application {
     private static final String DATA_CSV_PATH = "/lab01/Data.csv";
 
+    /** Prevents instantiation of this utility-style application class. */
     private Lab02Application() {
     }
 
@@ -30,13 +37,18 @@ public final class Lab02Application {
         private final boolean isPrescription;   
 
         /**
-         * Creates correct medicine metadata
+         * Creates validated medicine metadata.
          * 
-         * @param name - medicine name
-         * @param form - medicine form pills/liquid
-         * @param price - price of medicine
-         * @param daysToExpire - dayss until expiration
-         * @param isPrescription - defines if prescriptio n existed when purchasing the medicine (booean) 
+         * @param name medicine name; it must not be {@code null}
+         * @param form medicine form; only {@code Liquid} and {@code Pills} are
+         *             accepted, ignoring case
+         * @param price medicine price; it must not be negative
+         * @param daysToExpire number of days until expiration; it must not be
+         *                     negative
+         * @param isPrescription whether a prescription is required
+         * @throws IllegalArgumentException if the form is unsupported or the
+         *                                  price or expiration period is negative
+         * @throws NullPointerException if {@code name} is {@code null}
          */
         private MedicineInformation(String name, String form, double price, int daysToExpire, boolean isPrescription) {
             if (!form.equalsIgnoreCase("Liquid") && !form.equalsIgnoreCase("Pills")) {
@@ -55,11 +67,19 @@ public final class Lab02Application {
         }
 
         /**
-         * Creates record from CSV-row
+         * Creates medicine metadata from a semicolon-separated CSV row.
          * 
-         * @param line - line in format name;form;price;daysToExpire;isPrescription
-         * @return created record
-         * @throws IllegalArgumentException - in case the input data is invalid
+         * <p>All fields are trimmed. The expected format is
+         * {@code name;form;price;daysToExpire;isPrescription}.</p>
+         *
+         * @param line CSV row to parse; it must not be {@code null}
+         * @return validated medicine metadata
+         * @throws IllegalArgumentException if the row has the wrong number of
+         *                                  fields, contains invalid numeric data,
+         *                                  uses an unsupported form, has a
+         *                                  negative value, or contains an
+         *                                  invalid prescription value
+         * @throws NullPointerException if {@code line} is {@code null}
          */
         public static MedicineInformation fromCsv(String line) {
             Objects.requireNonNull(line, "Line cannot be null");
@@ -89,17 +109,39 @@ public final class Lab02Application {
         }
 
 
-        /** Setters per Medicine metadata arguments */
+        /**
+         * Returns the medicine price.
+         *
+         * @return medicine price
+         */
         public double getPrice() {
             return price;
         }
+
+        /**
+         * Returns the number of days until the medicine expires.
+         *
+         * @return expiration period in days
+         */
         public int getDaysToExpire() {
             return daysToExpire;
         }
+
+        /**
+         * Indicates whether the medicine requires a prescription.
+         *
+         * @return {@code true} when a prescription is required
+         */
         public boolean getIsPrescription() {
             return isPrescription;
         }
 
+        /**
+         * Returns the medicine as a semicolon-separated row.
+         *
+         * @return medicine name, form, price, expiration period, and
+         *         prescription flag in CSV-compatible order
+         */
         @Override
         public String toString() {
             return String.format(Locale.ROOT, "%s;%s;%.2f;%d;%s",
@@ -107,8 +149,24 @@ public final class Lab02Application {
         }
     }
 
+    /**
+     * Immutable summary of the valid medicine records processed by the
+     * application.
+     *
+     * @param averagePrice average price of valid medicines
+     * @param shortestExpirationPeriod shortest expiration period in days, or
+     *                                {@link Integer#MAX_VALUE} when no valid
+     *                                medicine exists
+     * @param prescriptionCount number of valid medicines requiring a prescription
+     */
     private record MedicineInformationSummary(double averagePrice, int shortestExpirationPeriod, int prescriptionCount) {
-        /** Verify validity of final metadata summary */
+        /**
+         * Validates the summary values.
+         *
+         * @throws IllegalArgumentException if any summary value is negative,
+         *                                  except the empty-summary sentinel
+         *                                  {@link Integer#MAX_VALUE}
+         */
         public MedicineInformationSummary {
             if(averagePrice < 0 || (shortestExpirationPeriod < 0 && shortestExpirationPeriod != Integer.MAX_VALUE)|| prescriptionCount < 0) {
                 throw new IllegalArgumentException("Results cannot be negative values");
@@ -116,10 +174,13 @@ public final class Lab02Application {
         }
     }
 
-        /**
-     * Reads the laboratory CSV file from the application classpath.
+    /**
+     * Reads a UTF-8 CSV resource from the application classpath.
      *
-     * @return one CSV row per array element
+     * @param path absolute classpath resource path, such as
+     *             {@code /lab01/Data.csv}
+     * @return an array containing one CSV row per element
+     * @throws NoSuchFileException if the resource does not exist
      * @throws IOException if the resource cannot be read
      */
     private static String[] getData(String path) throws IOException {
@@ -140,6 +201,8 @@ public final class Lab02Application {
      *
      * @param message human-readable description of the failure
      * @param cause exception that caused the failure
+     * @implNote This method writes the error to standard error and exits the
+     *           process with status code {@code 1}; it does not return.
      */
     private static void fail(String message, Exception cause) {
         System.err.println("Fatal error: " + message);
@@ -147,6 +210,13 @@ public final class Lab02Application {
         System.exit(1);
     }
 
+    /**
+     * Loads the medicine resource, calculates summary statistics, and prints
+     * them together with any row-validation errors.
+     *
+     * @param args command-line arguments; the application does not require any
+     *             arguments
+     */
     public static void main(String[] args) {
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
         String[] lines;
