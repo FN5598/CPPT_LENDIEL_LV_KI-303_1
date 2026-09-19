@@ -75,11 +75,12 @@ public final class Lab02Application {
                 double price = Double.parseDouble(fields[2].trim());
                 int daysToExpire = Integer.parseInt(fields[3].trim());
 
-                if(!fields[4].equalsIgnoreCase("true") && !fields[4].equalsIgnoreCase("false")) {
+                String prescriptionValue = fields[4].trim();
+                if(!prescriptionValue.equalsIgnoreCase("true") && !prescriptionValue.equalsIgnoreCase("false")) {
                     throw new IllegalArgumentException();
                 }
 
-                boolean isPrescription = Boolean.parseBoolean(fields[4]);
+                boolean isPrescription = Boolean.parseBoolean(prescriptionValue);
 
                 return new MedicineInformation(name, form, price, daysToExpire, isPrescription);
             } catch (NumberFormatException e) {
@@ -101,7 +102,8 @@ public final class Lab02Application {
 
         @Override
         public String toString() {
-            return String.format(Locale.ROOT, "%.2f: average price%n %d: shortest expiration period%n %d: medicines with prescription");
+            return String.format(Locale.ROOT, "%s;%s;%.2f;%d;%s",
+                    name, form, price, daysToExpire, isPrescription);
         }
     }
 
