@@ -4,86 +4,85 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Common base type for medicines handled by laboratory work 3.
- *
- * <p>The class owns fields and validation rules shared by every medicine. The
- * availability decision is intentionally delegated to concrete subclasses so
- * clients can work with a collection of {@code Medicine} objects without
- * knowing their concrete types.</p>
+ * Common immutable data and behavior for all medicines.
  */
 public abstract class Medicine {
     private final String name;
-    private final String form;
+    private final MedicineForm form;
     private final double price;
-    private final int daysToExpire;
-    private final MedicineKind kind;
+    private final int expirationDays;
     private final boolean prescription;
 
     /**
      * Creates a validated medicine.
      *
      * @param name medicine name
-     * @param form medicine form; only {@code Liquid} and {@code Pills} are
-     *             accepted, ignoring case
-     * @param kind dispensing category
-     * @param price medicine price; it must not be negative
-     * @param daysToExpire number of days until expiration; it must not be
-     *                     negative
+     * @param form medicine form
+     * @param price medicine price; it must be finite and non-negative
+     * @param expirationDays number of days until expiration; it must be
+     *                       non-negative
      * @param prescription whether a prescription is required
-     * @throws NullPointerException if a required reference is {@code null}
+     * @throws NullPointerException if {@code name} or {@code form} is null
      * @throws IllegalArgumentException if the name is blank or a numeric value
      *                                  is invalid
      */
-    protected Medicine(String name, String form, double price, int daysToExpire,
-            MedicineKind kind, boolean prescription) {
-        this(validateFields(name, form, price, daysToExpire, kind, prescription));
+    protected Medicine(String name, MedicineForm form, double price, int expirationDays,
+            boolean prescription) {
+        this(validateFields(name, form, price, expirationDays, prescription));
     }
 
     private Medicine(ValidatedFields fields) {
         this.name = fields.name();
         this.form = fields.form();
         this.price = fields.price();
-        this.daysToExpire = fields.daysToExpire();
-        this.kind = fields.kind();
+        this.expirationDays = fields.expirationDays();
         this.prescription = fields.prescription();
     }
 
-    private static ValidatedFields validateFields(String name, String form, double price,
-            int daysToExpire, MedicineKind kind, boolean prescription) {
+    private static ValidatedFields validateFields(String name, MedicineForm form,
+            double price, int expirationDays, boolean prescription) {
         String validatedName = Objects.requireNonNull(name, "Name cannot be null");
-        String validatedForm = Objects.requireNonNull(form, "Form cannot be null");
-        MedicineKind validatedKind = Objects.requireNonNull(kind, "Medicine kind cannot be null");
-
+        MedicineForm validatedForm = Objects.requireNonNull(form, "Medicine form cannot be null");
         if (validatedName.isBlank()) {
             throw new IllegalArgumentException("Medicine name cannot be blank.");
         }
-        if (!validatedForm.equalsIgnoreCase("Liquid") && !validatedForm.equalsIgnoreCase("Pills")) {
+        if (!Double.isFinite(price) || price < 0 || expirationDays < 0) {
             throw new IllegalArgumentException(
-                    "Medicine can only be in 2 forms \"Liquid\" or \"Pills\".");
+                    "Medicine price or expiration days cannot be negative.");
         }
-        if (validatedKind.requiresPrescription() != prescription) {
-            throw new IllegalArgumentException("Medicine kind and prescription value must match.");
-        }
-        if (!Double.isFinite(price) || price < 0 || daysToExpire < 0) {
-            throw new IllegalArgumentException(
-                    "Medicine price or days until expiration cannot be negative.");
-        }
-        return new ValidatedFields(validatedName, validatedForm, price, daysToExpire,
-                validatedKind, prescription);
+        return new ValidatedFields(validatedName, validatedForm, price, expirationDays,
+                prescription);
     }
 
-    private record ValidatedFields(String name, String form, double price,
-            int daysToExpire, MedicineKind kind, boolean prescription) {
+    private record ValidatedFields(String name, MedicineForm form, double price,
+            int expirationDays, boolean prescription) {
+    }
+
+    /**
+     * Returns the physical form stored in this medicine.
+     *
+     * @return medicine form
+     */
+    public abstract MedicineForm getForm();
+
+    /**
+     * Returns the validated form stored by the base class.
+     *
+     * @return stored medicine form
+     */
+    protected final MedicineForm storedForm() {
+        return form;
     }
 
     /**
      * Evaluates whether the medicine can be dispensed in the given situation.
      *
-     * @param prescriptionProvided whether the customer has a valid
-     *                              prescription
+     * @param prescriptionProvided whether the customer has a valid prescription
      * @return {@code true} when the medicine can be dispensed
      */
-    public abstract boolean isAvailable(boolean prescriptionProvided);
+    public final boolean isAvailable(boolean prescriptionProvided) {
+        return !isExpired() && (!prescription || prescriptionProvided);
+    }
 
     /**
      * Returns the medicine name.
@@ -92,15 +91,6 @@ public abstract class Medicine {
      */
     public final String getName() {
         return name;
-    }
-
-    /**
-     * Returns the medicine form.
-     *
-     * @return medicine form
-     */
-    public final String getForm() {
-        return form;
     }
 
     /**
@@ -117,30 +107,12 @@ public abstract class Medicine {
      *
      * @return expiration period in days
      */
-    public final int getDaysToExpire() {
-        return daysToExpire;
+    public final int getExpirationDays() {
+        return expirationDays;
     }
 
     /**
-     * Indicates whether the medicine requires a prescription.
-     *
-     * @return {@code true} for prescription medicines
-     */
-    public final boolean getIsPrescription() {
-        return prescription;
-    }
-
-    /**
-     * Returns the dispensing category.
-     *
-     * @return medicine kind
-     */
-    public final MedicineKind getKind() {
-        return kind;
-    }
-
-    /**
-     * Indicates whether the medicine requires a prescription.
+     * Indicates whether this medicine requires a prescription.
      *
      * @return {@code true} for prescription medicines
      */
@@ -149,28 +121,27 @@ public abstract class Medicine {
     }
 
     /**
-     * Returns whether the medicine has expired under the model used by this
-     * laboratory.
+     * Returns whether the medicine has expired.
      *
      * @return {@code true} when no valid days remain
      */
     protected final boolean isExpired() {
-        return daysToExpire == 0;
+        return expirationDays == 0;
     }
 
     /**
-     * Converts the medicine to the CSV representation used in Lab 02.
+     * Converts the medicine to the CSV representation used by the application.
      *
      * @return semicolon-separated medicine data
      */
     public final String toCsvRow() {
         return String.format(Locale.ROOT, "%s;%s;%.2f;%d;%s",
-                name, form, price, daysToExpire,
+                name, form.toCsvValue(), price, expirationDays,
                 requiresPrescription());
     }
 
     /**
-     * Returns the compatible CSV representation.
+     * Returns the CSV representation of this medicine.
      *
      * @return semicolon-separated medicine data
      */
@@ -180,7 +151,7 @@ public abstract class Medicine {
     }
 
     /**
-     * Compares medicines by concrete type and all shared identity fields.
+     * Compares medicines by concrete type and common data.
      *
      * @param other object to compare with
      * @return {@code true} when both objects represent the same medicine
@@ -195,11 +166,10 @@ public abstract class Medicine {
         }
         Medicine medicine = (Medicine) other;
         return Double.compare(price, medicine.price) == 0
-                && daysToExpire == medicine.daysToExpire
+                && expirationDays == medicine.expirationDays
                 && name.equals(medicine.name)
-                && prescription == medicine.prescription
-                && form.equals(medicine.form)
-                && kind == medicine.kind;
+                && form == medicine.form
+                && prescription == medicine.prescription;
     }
 
     /**
@@ -209,6 +179,6 @@ public abstract class Medicine {
      */
     @Override
     public final int hashCode() {
-        return Objects.hash(getClass(), name, form, price, daysToExpire, kind, prescription);
+        return Objects.hash(getClass(), name, form, price, expirationDays, prescription);
     }
 }
