@@ -37,18 +37,22 @@ Data.csv
 
 ## Stream operations
 
-The implementation demonstrates the following operations:
+Each required query is implemented by a separate named method:
 
-1. `filter` selects medicines with `expirationDays <= 30`.
-2. `map` converts medicines to their names.
-3. `Collectors.groupingBy` with `Collectors.counting()` counts medicines by
-   `MedicineForm`.
-4. `mapToDouble` calculates the total and average medicine price.
-5. `mapToInt` finds the shortest expiration period.
-6. `filter(Medicine::requiresPrescription)` counts prescription medicines.
-7. `sorted` orders medicines by expiration period and then by name.
-8. `limit(5)` keeps the five nearest expiration periods.
-9. `findFirst` implements lookup by medicine name.
+1. `countExpiringWithinThirtyDays` uses `filter` to select medicines with
+   `expirationDays <= 30`.
+2. `mapMedicineNames` uses `map` to convert medicines to their names.
+3. `countByForm` uses `Collectors.groupingBy` with `Collectors.counting()` to
+   count medicines by `MedicineForm`.
+4. `summarizePrices` uses `Collectors.summarizingDouble` to calculate price
+   count, sum, average, minimum, and maximum.
+5. `topFiveByExpiration` uses `sorted` with expiration as the primary
+   criterion, name as the secondary criterion, and `limit(5)`.
+6. `findByName` uses `filter` and `findFirst` and returns an
+   `Optional<Medicine>` when no match exists.
+
+Additional summary helpers calculate the shortest expiration period and the
+prescription count. The input list is never modified by any query.
 
 No concrete subtype checks are used in these operations. All processing is
 performed through the common `Medicine` type and its public methods.
@@ -76,6 +80,11 @@ For the supplied dataset, the application produces:
 | Correct rows | `10` |
 | Error rows | `0` |
 | Medicines expiring within 30 days | `9` |
+| Price count | `10` |
+| Price sum | `44.40` |
+| Average price | `4.44` |
+| Minimum price | `3.00` |
+| Maximum price | `6.20` |
 | Pills | `4` |
 | Liquid medicines | `6` |
 
@@ -87,6 +96,21 @@ The five medicines with the shortest expiration periods are:
 
 The name list preserves the CSV order and includes both records named
 `Indian`.
+
+## Comparison with the loop implementation
+
+The five shared summary values are compared automatically in
+`Lab04ApplicationTest` with the loop-based `Lab03Application`: average price,
+shortest expiration period, prescription count, valid-row count, and error
+count. Both implementations produce:
+
+```text
+Average medicine price: 4.44
+Shortest medicine expiration period: 1
+Total medicines that had prescription: 6
+Total correct rows: 10
+Errors: 0
+```
 
 ## Testing
 
@@ -100,7 +124,9 @@ The name list preserves the CSV order and includes both records named
 - formatted name lists;
 - grouping by medicine form;
 - top-five sorting and tie-breaking;
-- name lookup through a command-line argument.
+- name lookup through a command-line argument;
+- all named queries with empty input;
+- comparison of the Stream API summary with the Lab 03 loop summary.
 
 The complete test command is:
 
@@ -108,7 +134,7 @@ The complete test command is:
 ./mvnw clean test
 ```
 
-The result is 22 tests executed with zero failures and zero errors.
+The result is 28 tests executed with zero failures and zero errors.
 
 ## Build and verification
 

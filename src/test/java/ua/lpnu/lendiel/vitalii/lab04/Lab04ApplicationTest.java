@@ -11,11 +11,18 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
+import java.util.Arrays;
+import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import ua.lpnu.lendiel.vitalii.lab03.Lab03Application;
 import ua.lpnu.lendiel.vitalii.lab03.LiquidMedicine;
+import ua.lpnu.lendiel.vitalii.lab03.Medicine;
+import ua.lpnu.lendiel.vitalii.lab03.MedicineFactory;
+import ua.lpnu.lendiel.vitalii.lab03.MedicineForm;
 
 class Lab04ApplicationTest {
 
@@ -71,6 +78,40 @@ class Lab04ApplicationTest {
     }
 
     @Test
+    void namedQueriesReturnExpectedResults() throws IOException {
+        List<Medicine> medicines = loadMedicines();
+
+        assertEquals(9, Lab04Application.countExpiringWithinThirtyDays(medicines));
+        assertEquals(List.of("Indian", "Pakistani", "Pantheon", "Infinity",
+                        "Doubledown", "Decrease", "Beyond", "Alpha", "Beta", "Indian"),
+                Lab04Application.mapMedicineNames(medicines));
+
+        Map<MedicineForm, Long> countByForm = Lab04Application.countByForm(medicines);
+        assertEquals(4L, countByForm.get(MedicineForm.PILLS));
+        assertEquals(6L, countByForm.get(MedicineForm.LIQUID));
+
+        DoubleSummaryStatistics statistics = Lab04Application.summarizePrices(medicines);
+        assertEquals(10, statistics.getCount());
+        assertEquals(44.4, statistics.getSum(), 0.0001);
+        assertEquals(List.of("Pakistani", "Indian", "Infinity", "Alpha", "Beta"),
+                Lab04Application.topFiveByExpiration(medicines));
+    }
+
+    @Test
+    void namedQueriesAndSearchHandleEmptyInput() {
+        List<Medicine> empty = List.of();
+
+        assertEquals(0, Lab04Application.countExpiringWithinThirtyDays(empty));
+        assertTrue(Lab04Application.mapMedicineNames(empty).isEmpty());
+        assertTrue(Lab04Application.countByForm(empty).isEmpty());
+        assertEquals(0, Lab04Application.summarizePrices(empty).getCount());
+        assertTrue(Lab04Application.topFiveByExpiration(empty).isEmpty());
+        assertEquals(-1, Lab04Application.shortestExpirationPeriod(empty));
+        assertEquals(0, Lab04Application.countPrescriptionMedicines(empty));
+        assertTrue(Lab04Application.findByName(empty, "Unknown").isEmpty());
+    }
+
+    @Test
     void printsStreamCalculationsAndFormattedLists() {
         String output = runApplication();
 
@@ -80,6 +121,8 @@ class Lab04ApplicationTest {
         assertTrue(output.contains("Total correct rows: 10"));
         assertTrue(output.contains("Errors: 0"));
         assertTrue(output.contains("Medicines that expire within 30 days: 9"));
+        assertTrue(output.contains(
+                "Price statistics: count=10, sum=44.40, average=4.44, min=3.00, max=6.20"));
         assertTrue(output.contains(
                 "Names of all medicines: {Indian, Pakistani, Pantheon, Infinity, "
                         + "Doubledown, Decrease, Beyond, Alpha, Beta, Indian}"));
@@ -99,22 +142,61 @@ class Lab04ApplicationTest {
     }
 
     @Test
+    void omitsLookupOutputWhenMedicineIsNotFound() {
+        String output = runApplication("Unknown");
+
+        assertFalse(output.contains("Name lookup result:"));
+    }
+
+    @Test
+    void streamSummaryMatchesTheLab03LoopSummary() {
+        String loopOutput = runApplication(() -> Lab03Application.main(new String[0]));
+        String streamOutput = runApplication(() -> Lab04Application.main(new String[0]));
+
+        for (String prefix : List.of(
+                "Average medicine price:",
+                "Shortest medicine expiration period:",
+                "Total medicines that had prescription:",
+                "Total correct rows:",
+                "Errors:")) {
+            assertEquals(lineWithPrefix(loopOutput, prefix), lineWithPrefix(streamOutput, prefix));
+        }
+    }
+
+    @Test
     void formatsListsWithoutInterpretingPercentSigns() {
         assertEquals("{50% off, Aspirin}",
                 Lab04Application.formatList(List.of("50% off", "Aspirin")));
     }
 
     private static String runApplication(String... args) {
+        return runApplication(() -> Lab04Application.main(args));
+    }
+
+    private static String runApplication(Runnable application) {
         PrintStream originalOutput = System.out;
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         System.setOut(new PrintStream(output, true, StandardCharsets.UTF_8));
 
         try {
-            Lab04Application.main(args);
+            application.run();
         } finally {
             System.setOut(originalOutput);
         }
 
         return output.toString(StandardCharsets.UTF_8);
+    }
+
+    private static String lineWithPrefix(String output, String prefix) {
+        return output.lines()
+                .filter(line -> line.startsWith(prefix))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static List<Medicine> loadMedicines() throws IOException {
+        return Arrays.stream(Lab04Application.getData("/lab01/Data.csv"))
+                .map(MedicineFactory::fromCsv)
+                .toList();
     }
 }
