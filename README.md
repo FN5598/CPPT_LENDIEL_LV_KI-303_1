@@ -10,6 +10,7 @@ src/main/resources/                  CSV та інші ресурси прогр
 src/test/java/                       Модульні тести
 src/main/java/.../lab01/             Код і документація лабораторної роботи № 1
 src/main/java/.../lab02/             Код і документація лабораторної роботи № 2
+src/main/java/.../lab03/             Код і документація лабораторної роботи № 3
 REPORT.md                            Загальний звіт з посиланнями на звіти
 pom.xml                              Конфігурація Maven
 ```
@@ -20,6 +21,7 @@ pom.xml                              Конфігурація Maven
 | ------ | ---------------------------------- | ------------------------- | ------------------------- |
 | 1      | Обробка даних про лікарські засоби | [README](src/main/java/ua/lpnu/lendiel/vitalii/lab01/README.md) | [REPORT](src/main/java/ua/lpnu/lendiel/vitalii/lab01/REPORT.md) |
 | 2      | Структурована обробка даних про лікарські засоби | [README](src/main/java/ua/lpnu/lendiel/vitalii/lab02/README.md) | [REPORT](src/main/java/ua/lpnu/lendiel/vitalii/lab02/REPORT.md) |
+| 3      | Наслідування та поліморфна модель лікарських засобів | [README](src/main/java/ua/lpnu/lendiel/vitalii/lab03/README.md) | [REPORT](src/main/java/ua/lpnu/lendiel/vitalii/lab03/REPORT.md) |
 
 ## Вимоги
 
