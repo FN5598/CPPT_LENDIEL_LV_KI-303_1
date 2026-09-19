@@ -48,15 +48,22 @@ do not stop processing of valid rows.
 
 ## Stream API operations
 
-The application performs these operations:
+The application performs these named queries:
 
-- `filter` counts medicines expiring within 30 days;
-- `map` creates a list of medicine names;
-- `groupingBy` counts medicines by `MedicineForm`;
-- `mapToDouble` and `average`-style aggregation calculate price statistics;
-- `sorted`, `thenComparing`, and `limit(5)` select the five shortest expiration
-  periods, using the name as a tie-breaker;
-- `filter`, `map`, and `findFirst` implement a medicine-name lookup.
+- `countExpiringWithinThirtyDays` uses `filter` to count medicines expiring
+  within 30 days;
+- `mapMedicineNames` uses `map` to create a list of medicine names;
+- `countByForm` uses `Collectors.groupingBy` to count medicines by
+  `MedicineForm`;
+- `summarizePrices` uses a numeric collector to calculate price statistics;
+- `topFiveByExpiration` uses `sorted`, `thenComparing`, and `limit(5)` to
+  select the five shortest expiration periods, using the name as a tie-breaker;
+- `findByName` uses `filter`, `findFirst`, and `Optional` for a lookup that may
+  have no result.
+
+The queries run after parsing and validation: valid medicines and errors are
+separated first, then the summary and named queries are calculated. None of the
+queries mutates the input collection.
 
 ## Example output
 
@@ -93,3 +100,9 @@ java -cp target/classes ua.lpnu.lendiel.vitalii.lab04.Lab04Application Indian
 The GitHub Actions workflow runs `./mvnw -B verify` on Ubuntu, Windows, and
 macOS with Java 21. A successful run uploads the generated JAR as a workflow
 artifact.
+
+## Comparison with the loop implementation
+
+The Lab 04 tests compare the shared summary values with the loop-based
+`Lab03Application`: average price, shortest expiration period, prescription
+count, valid-row count, and error count.
