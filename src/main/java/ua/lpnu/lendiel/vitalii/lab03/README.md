@@ -48,6 +48,7 @@ included in the production resource.
 ./mvnw clean test
 ./mvnw verify
 java -cp target/classes ua.lpnu.lendiel.vitalii.lab03.Lab03Application
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab03.Lab03Application --version
 ```
 
 Expected statistics for the supplied data are an average price of `4.44`, a

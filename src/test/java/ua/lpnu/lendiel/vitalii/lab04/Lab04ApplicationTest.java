@@ -109,6 +109,19 @@ class Lab04ApplicationTest {
         assertEquals(-1, Lab04Application.shortestExpirationPeriod(empty));
         assertEquals(0, Lab04Application.countPrescriptionMedicines(empty));
         assertTrue(Lab04Application.findByName(empty, "Unknown").isEmpty());
+        assertEquals("count=0, sum=0.00, average=0.00, min=N/A, max=N/A",
+                Lab04Application.formatPriceStatistics(Lab04Application.summarizePrices(empty)));
+    }
+
+    @Test
+    void topNHonorsNegativeZeroAndOversizedBoundaries() throws IOException {
+        List<Medicine> medicines = loadMedicines();
+
+        assertThrows(IllegalArgumentException.class, () -> Lab04Application.topN(medicines, -1));
+        assertTrue(Lab04Application.topN(medicines, 0).isEmpty());
+        assertEquals(10, Lab04Application.topN(medicines, 50).size());
+        assertEquals(Lab04Application.topFiveByExpiration(medicines),
+                Lab04Application.topN(medicines, 5));
     }
 
     @Test

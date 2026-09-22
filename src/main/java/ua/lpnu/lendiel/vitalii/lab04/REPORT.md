@@ -126,6 +126,8 @@ Errors: 0
 - top-five sorting and tie-breaking;
 - name lookup through a command-line argument;
 - all named queries with empty input;
+- top-N negative, zero, and oversized boundaries plus deliberate empty numeric
+  summary formatting;
 - comparison of the Stream API summary with the Lab 03 loop summary.
 
 The complete test command is:
@@ -134,7 +136,8 @@ The complete test command is:
 ./mvnw clean test
 ```
 
-The result is 28 tests executed with zero failures and zero errors.
+The complete project suite currently contains 47 tests and executes with zero
+failures and zero errors.
 
 ## Build and verification
 

@@ -69,6 +69,7 @@ class Lab02ApplicationTest {
         assertThrows(IllegalArgumentException.class, () -> createSummary(-1, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> createSummary(1, -1, 0));
         assertThrows(IllegalArgumentException.class, () -> createSummary(1, 1, -1));
+        assertThrows(IllegalArgumentException.class, () -> createSummary(Double.NaN, 1, 0));
     }
 
     @Test

@@ -11,9 +11,13 @@
 Програма розміщена в `src/main/java/ua/lpnu/lendiel/vitalii/lab01/`.
 Вхідні дані зберігаються у `src/main/resources/lab01/Data.csv`.
 
-Програма читає CSV-рядки з classpath, перевіряє кількість і вміст полів, визначає коректні та некоректні записи, а також обчислює середню ціну, кількість рецептурних препаратів, найкоротший термін придатності й загальну кількість коректних рядків.
+Програма читає UTF-8-рядки з `data/input.csv` або classpath fallback,
+перевіряє рівно п'ять полів і варіантні інваріанти, визначає коректні та
+некоректні записи, а також обчислює середню ціну, кількість рецептурних
+препаратів, найкоротший термін придатності й кількість коректних рядків.
 
-Помилки валідації зберігаються у файлі `Errors.txt` і виводяться в консоль.
+Помилки валідації містять фізичний номер рядка. Повний звіт друкується в
+консоль і зберігається у UTF-8 (за замовчуванням `target/lab01/report.txt`).
 
 ## Збірка і запуск
 
@@ -21,18 +25,21 @@
 ./mvnw clean test
 ./mvnw package
 java -cp target/classes ua.lpnu.lendiel.vitalii.lab01.Lab01Application
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab01.Lab01Application --help
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab01.Lab01Application --version
 ```
 
 ## GitHub Issues і Pull Request
 
 - Issues: [Issue #3](https://github.com/FN5598/CPPT_LENDIEL_LV_KI-303_1/issues/3), [Issue #1](https://github.com/FN5598/CPPT_LENDIEL_LV_KI-303_1/issues/1).
 - Pull Requests: [Pull Request #4](https://github.com/FN5598/CPPT_LENDIEL_LV_KI-303_1/pull/4), [Pull Request #2](https://github.com/FN5598/CPPT_LENDIEL_LV_KI-303_1/pull/2).
-- Відповідність вимогам: реалізовано читання CSV з classpath, перевірку кількості та значень полів, обробку помилок, розрахунок статистики й запис помилок у `Errors.txt`.
+- Відповідність вимогам: реалізовано UTF-8 input/output, перевірку кількості та значень полів, обробку помилок із фізичними номерами рядків, розрахунок статистики й `--help`/`--version`.
 
 ## Тестування, CI і артефакти
 
 - Команда тестування: `./mvnw clean test`.
-- Результат: компіляція успішна; виконано 2 тести, усі тести завершилися успішно.
+- Результат: компіляція успішна; позитивні, граничні та негативні тести
+  завершилися успішно.
 - Перевірка пакування: `./mvnw -DskipTests package` завершилася успішно.
 - Запуск програми: середня ціна — `4.44`, кількість рецептурних препаратів — `6`, найкоротший термін — `1`, коректних рядків — `10`, помилок немає.
 - CI / GitHub Actions: [перегляд запуску CI](https://github.com/FN5598/CPPT_LENDIEL_LV_KI-303_1/actions/runs/35134222874).

@@ -35,7 +35,8 @@ java -cp target/classes ua.lpnu.lendiel.vitalii.lab02.Lab02Application
 - Перевірка пакування: `./mvnw -DskipTests package` завершилася успішно.
 - Запуск програми: середня ціна — `4.44`, найкоротший термін — `1`, рецептурних препаратів — `6`, коректних рядків — `10`, помилок немає.
 - CI / GitHub Actions: [перегляд запусків CI](https://github.com/FN5598/CPPT_LENDIEL_LV_KI-303_1/actions).
-- JAR-артефакт: `target/CPPT_LAB_WORKS-1.0-SNAPSHOT.jar`.
+- JAR-артефакт: `target/CPPT_LAB_WORKS-5.0.0.jar` у поточному кумулятивному
+  релізі; реліз лабораторної роботи № 2 має тег `v2.0.0`.
 
 ## Академічна доброчесність
 
