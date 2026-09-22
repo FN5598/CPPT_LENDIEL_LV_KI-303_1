@@ -7,7 +7,7 @@
     <!-- Group ID, Artifact ID, and Version -->
     <groupId>ua.lpnu.lendiel.vitalii</groupId>
     <artifactId>CPPT_LAB_WORKS</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
 
     <name>CPPT Laboratory Works</name>
@@ -16,6 +16,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
+        <release.lab>lab04</release.lab>
+        <lab01.version>1.0.0</lab01.version>
+        <lab02.version>2.0.0</lab02.version>
+        <lab03.version>3.0.0</lab03.version>
+        <lab04.version>4.0.0</lab04.version>
+        <lab05.version>5.0.0</lab05.version>
     </properties>
 
     <!-- Dependencies -->
@@ -29,7 +35,19 @@
     </dependencies>
 
 
-     <build> 
+     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes><exclude>version.properties</exclude></excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes><include>version.properties</include></includes>
+            </resource>
+        </resources>
         <plugins> 
             <plugin> 
                 <groupId>org.apache.maven.plugins</groupId> 

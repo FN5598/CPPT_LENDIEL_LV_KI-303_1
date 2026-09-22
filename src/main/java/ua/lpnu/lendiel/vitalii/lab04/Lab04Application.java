@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import ua.lpnu.lendiel.vitalii.VersionInfo;
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
 import ua.lpnu.lendiel.vitalii.lab03.Medicine;
 import ua.lpnu.lendiel.vitalii.lab03.MedicineFactory;
@@ -35,6 +36,10 @@ public final class Lab04Application {
      *             as a medicine-name lookup
      */
     public static void main(String[] args) {
+        if (args.length == 1 && "--version".equals(args[0])) {
+            System.out.println(VersionInfo.labVersion("lab04"));
+            return;
+        }
         String[] lines;
         try {
             lines = getData(DATA_CSV_PATH);
