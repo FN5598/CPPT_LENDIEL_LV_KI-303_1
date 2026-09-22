@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import ua.lpnu.lendiel.vitalii.VersionInfo;
+
 /**
  * Reads and validates laboratory data about medicines and prints summary statistics.
  */
@@ -25,6 +27,10 @@ public class Lab01Application {
      * @param args command-line arguments; this application does not require any
      */
     public static void main(String[] args) {
+        if (args.length == 1 && "--version".equals(args[0])) {
+            System.out.println(VersionInfo.labVersion("lab01"));
+            return;
+        }
         List<String> errors = new ArrayList<>();
         double totalPrice = 0;
         int totalRows = 0;
