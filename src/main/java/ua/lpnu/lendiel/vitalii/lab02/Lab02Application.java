@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 
+import ua.lpnu.lendiel.vitalii.VersionInfo;
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
 
 /**
@@ -218,6 +219,10 @@ public final class Lab02Application {
      *             arguments
      */
     public static void main(String[] args) {
+        if (args.length == 1 && "--version".equals(args[0])) {
+            System.out.println(VersionInfo.labVersion("lab02"));
+            return;
+        }
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
         String[] lines;
 
