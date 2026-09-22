@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
+import ua.lpnu.lendiel.vitalii.VersionInfo;
 
 /**
  * Reads medicine rows into a polymorphic model and prints a summary report.
@@ -24,6 +25,10 @@ public final class Lab03Application {
      * @param args command-line arguments; no arguments are required
      */
     public static void main(String[] args) {
+        if (args.length == 1 && "--version".equals(args[0])) {
+            System.out.println(VersionInfo.labVersion("lab03"));
+            return;
+        }
         String[] lines;
         try {
             lines = getData(DATA_CSV_PATH);

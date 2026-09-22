@@ -88,6 +88,7 @@ LIQUID -> 6
 ./mvnw verify
 ./mvnw package
 java -cp target/classes ua.lpnu.lendiel.vitalii.lab04.Lab04Application
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab04.Lab04Application --version
 ```
 
 To search for a medicine by name, pass the name as the first argument:

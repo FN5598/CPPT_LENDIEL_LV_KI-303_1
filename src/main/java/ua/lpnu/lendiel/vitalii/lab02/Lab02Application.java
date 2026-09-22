@@ -1,9 +1,6 @@
 package ua.lpnu.lendiel.vitalii.lab02;
 
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
@@ -14,6 +11,7 @@ import java.util.Objects;
 
 
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
+import ua.lpnu.lendiel.vitalii.VersionInfo;
 
 /**
  * Reads, validates, and summarizes medicine data from a classpath CSV resource.
@@ -29,7 +27,8 @@ public final class Lab02Application {
     }
 
 
-    private static final class MedicineInformation {
+    /** Immutable validated medicine entity used by the Lab 02 application. */
+    public static final class MedicineInformation {
         private final String name;
         private final String form;
         private final double price;
@@ -50,17 +49,35 @@ public final class Lab02Application {
          *                                  price or expiration period is negative
          * @throws NullPointerException if {@code name} is {@code null}
          */
-        private MedicineInformation(String name, String form, double price, int daysToExpire, boolean isPrescription) {
-            if (!form.equalsIgnoreCase("Liquid") && !form.equalsIgnoreCase("Pills")) {
+        /**
+         * Creates validated medicine metadata.
+         *
+         * @param name medicine name
+         * @param form medicine form
+         * @param price non-negative finite price
+         * @param daysToExpire non-negative expiration period
+         * @param isPrescription whether a prescription is required
+         */
+        public MedicineInformation(String name, String form, double price, int daysToExpire,
+                boolean isPrescription) {
+            String validatedName = Objects.requireNonNull(name,
+                    "Name cannot be null. Please enter medicine name").trim();
+            String validatedForm = Objects.requireNonNull(form,
+                    "Form cannot be null. Please enter medicine form").trim();
+            if (validatedName.isEmpty()) {
+                throw new IllegalArgumentException("Name cannot be blank");
+            }
+            if (!validatedForm.equalsIgnoreCase("Liquid")
+                    && !validatedForm.equalsIgnoreCase("Pills")) {
                 throw new IllegalArgumentException("Medicine can only be in 2 forms \"Liquid\" or \"Pills\". Please use correct form.");
             }
 
-            if (price < 0 || daysToExpire < 0)  {
+            if (!Double.isFinite(price) || price < 0 || daysToExpire < 0)  {
                 throw new IllegalArgumentException("Medicine price or days untill expiration cannot be negative. Please use correct value.");
             }
 
-            this.name = Objects.requireNonNull(name, "Name cannot be null. Please enter medicine name");
-            this.form = form;
+            this.name = validatedName;
+            this.form = validatedForm;
             this.price = price;
             this.daysToExpire = daysToExpire;
             this.isPrescription = isPrescription;
@@ -97,7 +114,7 @@ public final class Lab02Application {
 
                 String prescriptionValue = fields[4].trim();
                 if(!prescriptionValue.equalsIgnoreCase("true") && !prescriptionValue.equalsIgnoreCase("false")) {
-                    throw new IllegalArgumentException();
+                    throw new IllegalArgumentException("Invalid prescription value");
                 }
 
                 boolean isPrescription = Boolean.parseBoolean(prescriptionValue);
@@ -116,6 +133,24 @@ public final class Lab02Application {
          */
         public double getPrice() {
             return price;
+        }
+
+        /**
+         * Returns the medicine name.
+         *
+         * @return medicine name
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns the validated medicine form.
+         *
+         * @return medicine form
+         */
+        public String getForm() {
+            return form;
         }
 
         /**
@@ -147,6 +182,27 @@ public final class Lab02Application {
             return String.format(Locale.ROOT, "%s;%s;%.2f;%d;%s",
                     name, form, price, daysToExpire, isPrescription);
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof MedicineInformation medicine)) {
+                return false;
+            }
+            return Double.compare(price, medicine.price) == 0
+                    && daysToExpire == medicine.daysToExpire
+                    && isPrescription == medicine.isPrescription
+                    && name.equals(medicine.name)
+                    && form.equalsIgnoreCase(medicine.form);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, form.toLowerCase(Locale.ROOT), price,
+                    daysToExpire, isPrescription);
+        }
     }
 
     /**
@@ -159,7 +215,15 @@ public final class Lab02Application {
      *                                medicine exists
      * @param prescriptionCount number of valid medicines requiring a prescription
      */
-    private record MedicineInformationSummary(double averagePrice, int shortestExpirationPeriod, int prescriptionCount) {
+    /**
+     * Immutable summary of the valid records processed by the application.
+     *
+     * @param averagePrice average valid medicine price
+     * @param shortestExpirationPeriod shortest valid expiration period
+     * @param prescriptionCount number of valid prescription medicines
+     */
+    public record MedicineInformationSummary(double averagePrice,
+            int shortestExpirationPeriod, int prescriptionCount) {
         /**
          * Validates the summary values.
          *
@@ -168,7 +232,10 @@ public final class Lab02Application {
          *                                  {@link Integer#MAX_VALUE}
          */
         public MedicineInformationSummary {
-            if(averagePrice < 0 || (shortestExpirationPeriod < 0 && shortestExpirationPeriod != Integer.MAX_VALUE)|| prescriptionCount < 0) {
+            if(!Double.isFinite(averagePrice) || averagePrice < 0
+                    || (shortestExpirationPeriod < 0
+                    && shortestExpirationPeriod != Integer.MAX_VALUE)
+                    || prescriptionCount < 0) {
                 throw new IllegalArgumentException("Results cannot be negative values");
             }
         }
@@ -218,7 +285,10 @@ public final class Lab02Application {
      *             arguments
      */
     public static void main(String[] args) {
-        System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
+        if (args.length == 1 && "--version".equals(args[0])) {
+            System.out.println(VersionInfo.labVersion("lab02"));
+            return;
+        }
         String[] lines;
 
         try {
