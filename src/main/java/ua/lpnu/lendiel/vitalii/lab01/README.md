@@ -2,7 +2,16 @@
 
 ## Статус
 
-Лабораторна робота містить Java-програму для читання та перевірки даних про лікарські засоби.
+Лабораторна робота містить Java-програму для читання та перевірки даних про
+лікарські засоби варіанта 11. Формат одного рядка:
+
+```text
+name;form;price;expirationDays;prescription
+```
+
+Перевіряються рівно п'ять полів, форма `Liquid`/`Pills`, невід'ємна скінченна
+ціна, невід'ємний термін і `true`/`false`. Некоректний рядок не впливає на
+статистику; помилка містить його фізичний номер.
 
 ## Код і ресурси
 
@@ -10,7 +19,23 @@
 - Вхідні дані: [`Data.csv`](../../../../../../resources/lab01/Data.csv)
 - Звіт: [`REPORT.md`](REPORT.md)
 
-Програма читає CSV-рядки, перевіряє кількість і вміст полів та обчислює середню ціну, кількість рецептурних препаратів, найкоротший термін придатності й загальну кількість рядків.
+Програма обчислює середню ціну, кількість рецептурних препаратів,
+найкоротший термін придатності й кількість коректних рядків. Числа форматуються
+через `Locale.ROOT`, а звіт однаково друкується в консоль і зберігається в
+UTF-8-файл.
+
+## Командний рядок
+
+```bash
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab01.Lab01Application --help
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab01.Lab01Application \
+  --input data/input.csv --output target/lab01/report.txt
+java -cp target/classes ua.lpnu.lendiel.vitalii.lab01.Lab01Application --version
+```
+
+За замовчуванням використовується `data/input.csv`; якщо його немає, запуск
+із репозиторію або JAR використовує classpath-файл `Data.csv`. Звіт за
+замовчуванням записується до `target/lab01/report.txt`.
 
 ## Збірка і тестування
 
@@ -19,8 +44,17 @@
 ./mvnw package
 ```
 
-## Наступні кроки
+Тести перевіряють валідні, граничні та змішані рядки, фізичні номери помилок,
+UTF-8-звіт і CLI-параметри.
 
-- додати тести для коректних і некоректних CSV-рядків;
-- перевірити запуск програми з ресурсом `Data.csv` через classpath;
-- доповнити звіт результатами запуску та посиланнями на GitHub Issues/Pull Request.
+## Executable release JAR
+
+```bash
+./mvnw package
+java -jar target/CPPT_LAB_WORKS-1.0.0.jar --help
+java -jar target/CPPT_LAB_WORKS-1.0.0.jar --input data/input.csv --output target/lab01/report.txt
+```
+
+`--input` and `--output` can be used independently. Without `--input`,
+the application reads the bundled `Data.csv`. The input is the five-column semicolon-delimited medicine CSV. The output is the UTF-8 text report.
+The release branch CI runs on branch pushes and uploads a JAR for each OS.
