@@ -25,3 +25,15 @@ java -cp target/classes ua.lpnu.lendiel.vitalii.lab02.Lab02Application
 - додати окремі модульні тести для `MedicineInformation.fromCsv(...)`;
 - перевірити обробку порожніх і некоректних CSV-полів;
 - доповнити звіт результатами запуску та посиланнями на GitHub Issues/Pull Request.
+
+## Executable release JAR
+
+```bash
+./mvnw package
+java -jar target/CPPT_LAB_WORKS-2.0.0.jar --help
+java -jar target/CPPT_LAB_WORKS-2.0.0.jar --input data/input.csv --output target/lab02/report.txt
+```
+
+`--input` and `--output` can be used independently. Without `--input`,
+the application reads the bundled `Data.csv`. The input is the five-column semicolon-delimited medicine CSV. The output is the UTF-8 text report.
+The release branch CI runs on branch pushes and uploads a JAR for each OS.
