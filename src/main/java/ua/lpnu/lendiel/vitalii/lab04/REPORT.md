@@ -134,7 +134,7 @@ The complete test command is:
 ./mvnw clean test
 ```
 
-The result is 28 tests executed with zero failures and zero errors.
+The result is 38 tests executed with zero failures and zero errors.
 
 ## Build and verification
 
@@ -149,7 +149,7 @@ commands are:
 
 `verify` runs the tests, creates the JAR, and checks the compiled classes with
 SpotBugs. The GitHub Actions workflow repeats `verify` on Ubuntu, Windows, and
-macOS and uploads the JAR produced on each operating system.
+macOS. It also runs a separate package step and uploads the JAR produced on each operating system.
 
 ## Documentation
 

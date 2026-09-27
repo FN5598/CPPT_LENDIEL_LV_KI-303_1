@@ -107,3 +107,15 @@ artifact.
 The Lab 04 tests compare the shared summary values with the loop-based
 `Lab03Application`: average price, shortest expiration period, prescription
 count, valid-row count, and error count.
+
+## Executable release JAR
+
+```bash
+./mvnw package
+java -jar target/CPPT_LAB_WORKS-4.0.0.jar --help
+java -jar target/CPPT_LAB_WORKS-4.0.0.jar --input data/input.csv --output target/lab04/report.txt
+```
+
+`--input` and `--output` can be used independently. Without `--input`,
+the application reads the bundled `Data.csv`. The input is the five-column semicolon-delimited medicine CSV. The output is the UTF-8 text report.
+The release branch CI runs on branch pushes and uploads a JAR for each OS.

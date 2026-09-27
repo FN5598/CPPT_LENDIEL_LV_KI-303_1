@@ -1,6 +1,8 @@
 package ua.lpnu.lendiel.vitalii.lab04;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
 import java.util.Comparator;
@@ -13,8 +15,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import ua.lpnu.lendiel.vitalii.VersionInfo;
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
+import ua.lpnu.lendiel.vitalii.LabCli;
+import ua.lpnu.lendiel.vitalii.VersionInfo;
 import ua.lpnu.lendiel.vitalii.lab03.Medicine;
 import ua.lpnu.lendiel.vitalii.lab03.MedicineFactory;
 import ua.lpnu.lendiel.vitalii.lab03.MedicineForm;
@@ -36,18 +39,21 @@ public final class Lab04Application {
      *             as a medicine-name lookup
      */
     public static void main(String[] args) {
-        if (args.length == 1 && "--version".equals(args[0])) {
-            System.out.println(VersionInfo.labVersion("lab04"));
-            return;
-        }
-        String[] lines;
         try {
-            lines = getData(DATA_CSV_PATH);
-        } catch (IOException exception) {
-            System.err.println("Could not read data file: " + DATA_CSV_PATH);
-            System.err.println(exception.getMessage());
-            return;
-        }
+            LabCli options = LabCli.parse(args);
+            if (options.positional().size() > 1) {
+                throw new IllegalArgumentException("expected at most one medicine name");
+            }
+            if (options.help()) {
+                System.out.println("Usage: lab04 [--input PATH] [--output PATH] "
+                        + "[--help] [--version] [MEDICINE_NAME]");
+                return;
+            }
+            if (options.version()) {
+                System.out.println(VersionInfo.labVersion("lab04"));
+                return;
+            }
+            String[] lines = options.readLines(Lab04Application.class, DATA_CSV_PATH);
 
         List<ParseResult> results = parseLines(lines);
 
@@ -71,16 +77,24 @@ public final class Lab04Application {
         Map<MedicineForm, Long> countByForm = countByForm(medicines);
         List<String> topFiveSmallestDaysToExpireNames = topFiveByExpiration(medicines);
 
-        Optional<Medicine> nameLookup = args.length > 0 && !args[0].isBlank()
-                ? findByName(medicines, args[0])
-                : Optional.empty();
+        Optional<Medicine> nameLookup = options.positional().isEmpty()
+                ? Optional.empty()
+                : findByName(medicines, options.positional().get(0));
 
-        printSummary(averagePrice, shortestExpirationPeriod, prescriptionCount,
-                medicines.size(), errors);
-
-        printStreamResults(expirationDateUntilThirtyDaysCount, names, countByForm,
-                topFiveSmallestDaysToExpireNames,
-                priceStatistics, nameLookup);
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        try (PrintStream report = new PrintStream(buffer, true, StandardCharsets.UTF_8)) {
+            printSummary(report, averagePrice, shortestExpirationPeriod, prescriptionCount,
+                    medicines.size(), errors);
+            printStreamResults(report, expirationDateUntilThirtyDaysCount, names, countByForm,
+                    topFiveSmallestDaysToExpireNames, priceStatistics, nameLookup);
+        }
+        options.writeReport(buffer.toString(StandardCharsets.UTF_8));
+        } catch (IllegalArgumentException exception) {
+            System.err.println("Argument error: " + exception.getMessage());
+        } catch (IOException exception) {
+            System.err.println("Could not process input or output file: "
+                    + exception.getMessage());
+        }
     }
 
     /**
@@ -125,7 +139,7 @@ public final class Lab04Application {
      * @param medicines medicines to inspect
      * @return number of medicines expiring within 30 days
      */
-    static long countExpiringWithinThirtyDays(List<Medicine> medicines) {
+    public static long countExpiringWithinThirtyDays(List<Medicine> medicines) {
         return medicines.stream()
                 .filter(medicine -> medicine.getExpirationDays() <= 30)
                 .count();
@@ -137,7 +151,7 @@ public final class Lab04Application {
      * @param medicines medicines to transform
      * @return medicine names in the input order
      */
-    static List<String> mapMedicineNames(List<Medicine> medicines) {
+    public static List<String> mapMedicineNames(List<Medicine> medicines) {
         return medicines.stream()
                 .map(Medicine::getName)
                 .toList();
@@ -149,7 +163,7 @@ public final class Lab04Application {
      * @param medicines medicines to group
      * @return counts keyed by medicine form
      */
-    static Map<MedicineForm, Long> countByForm(List<Medicine> medicines) {
+    public static Map<MedicineForm, Long> countByForm(List<Medicine> medicines) {
         return medicines.stream()
                 .collect(Collectors.groupingBy(Medicine::getForm,
                         () -> new EnumMap<>(MedicineForm.class), Collectors.counting()));
@@ -161,7 +175,7 @@ public final class Lab04Application {
      * @param medicines medicines whose prices should be summarized
      * @return count, sum, minimum, average, and maximum price statistics
      */
-    static DoubleSummaryStatistics summarizePrices(List<Medicine> medicines) {
+    public static DoubleSummaryStatistics summarizePrices(List<Medicine> medicines) {
         return medicines.stream()
                 .collect(Collectors.summarizingDouble(Medicine::getPrice));
     }
@@ -173,13 +187,41 @@ public final class Lab04Application {
      * @param medicines medicines to sort and limit
      * @return names of the selected medicines
      */
-    static List<String> topFiveByExpiration(List<Medicine> medicines) {
+    public static List<String> topFiveByExpiration(List<Medicine> medicines) {
+        return topNByExpiration(medicines, 5);
+    }
+
+    /**
+     * Selects up to {@code n} medicines by the variant's shortest-expiration
+     * ordering. The source list is not mutated.
+     *
+     * @param medicines medicines to sort and limit
+     * @param n requested number of results
+     * @return at most {@code n} names in expiration/name order
+     * @throws IllegalArgumentException if {@code n} is negative
+     */
+    public static List<String> topNByExpiration(List<Medicine> medicines, int n) {
+        if (n < 0) {
+            throw new IllegalArgumentException("Result count cannot be negative");
+        }
         return medicines.stream()
                 .sorted(Comparator.comparingInt(Medicine::getExpirationDays)
                         .thenComparing(Medicine::getName))
-                .limit(5)
+                .limit(n)
                 .map(Medicine::getName)
                 .toList();
+    }
+
+    /**
+     * Alias for the named top-N query used by the laboratory requirement.
+     *
+     * @param medicines medicines to sort and limit
+     * @param n requested number of results
+     * @return at most {@code n} names in expiration/name order
+     * @throws IllegalArgumentException if {@code n} is negative
+     */
+    public static List<String> topN(List<Medicine> medicines, int n) {
+        return topNByExpiration(medicines, n);
     }
 
     /**
@@ -188,7 +230,7 @@ public final class Lab04Application {
      * @param medicines medicines to inspect
      * @return shortest period, or {@code -1} when the input is empty
      */
-    static int shortestExpirationPeriod(List<Medicine> medicines) {
+    public static int shortestExpirationPeriod(List<Medicine> medicines) {
         return medicines.stream()
                 .mapToInt(Medicine::getExpirationDays)
                 .min()
@@ -201,7 +243,7 @@ public final class Lab04Application {
      * @param medicines medicines to inspect
      * @return number of prescription medicines
      */
-    static long countPrescriptionMedicines(List<Medicine> medicines) {
+    public static long countPrescriptionMedicines(List<Medicine> medicines) {
         return medicines.stream()
                 .filter(Medicine::requiresPrescription)
                 .count();
@@ -210,54 +252,55 @@ public final class Lab04Application {
     /**
      * Prints the common summary values and parsing errors.
      *
-     * @param averagePrice average price of valid medicines
+     * @param averagePrice             average price of valid medicines
      * @param shortestExpirationPeriod shortest expiration period
-     * @param prescriptionCount number of prescription medicines
-     * @param totalRows number of valid rows
-     * @param errors parsing errors
+     * @param prescriptionCount        number of prescription medicines
+     * @param totalRows                number of valid rows
+     * @param errors                   parsing errors
      */
-    private static void printSummary(double averagePrice, int shortestExpirationPeriod,
+    private static void printSummary(PrintStream out, double averagePrice, int shortestExpirationPeriod,
             long prescriptionCount, int totalRows, List<String> errors) {
-        System.out.printf(Locale.ROOT, "Average medicine price: %.2f%n", averagePrice);
-        System.out.printf(Locale.ROOT,
+        out.printf(Locale.ROOT, "Average medicine price: %.2f%n", averagePrice);
+        out.printf(Locale.ROOT,
                 "Shortest medicine expiration period: %d%n", shortestExpirationPeriod);
-        System.out.printf(Locale.ROOT,
+        out.printf(Locale.ROOT,
                 "Total medicines that had prescription: %d%n", prescriptionCount);
-        System.out.printf(Locale.ROOT, "Total correct rows: %d%n", totalRows);
-        System.out.printf(Locale.ROOT, "%n%n%nErrors: %d%n", errors.size());
-        errors.forEach(System.out::println);
+        out.printf(Locale.ROOT, "Total correct rows: %d%n", totalRows);
+        out.printf(Locale.ROOT, "%n%n%nErrors: %d%n", errors.size());
+        errors.forEach(out::println);
     }
 
     /**
      * Prints the results produced by the Lab 04 stream queries.
      *
      * @param expirationDateUntillThirtyDaysCount count of medicines expiring
-     *                                             within 30 days
-     * @param namesMap names produced by the mapping query
-     * @param countByForm counts produced by the grouping query
-     * @param topFiveSmallestDaysToExpireNames names produced by the top-five query
-     * @param priceStatistics statistics produced by the price query
-     * @param nameLookup optional result of the name lookup
+     *                                            within 30 days
+     * @param namesMap                            names produced by the mapping
+     *                                            query
+     * @param countByForm                         counts produced by the grouping
+     *                                            query
+     * @param topFiveSmallestDaysToExpireNames    names produced by the top-five
+     *                                            query
+     * @param priceStatistics                     statistics produced by the price
+     *                                            query
+     * @param nameLookup                          optional result of the name lookup
      */
-    private static void printStreamResults(long expirationDateUntillThirtyDaysCount, List<String> namesMap,
+    private static void printStreamResults(PrintStream out, long expirationDateUntillThirtyDaysCount, List<String> namesMap,
             Map<MedicineForm, Long> countByForm, List<String> topFiveSmallestDaysToExpireNames,
             DoubleSummaryStatistics priceStatistics, Optional<Medicine> nameLookup) {
-        System.out.printf(Locale.ROOT, "%nMedicines that expire within 30 days: %d%n",
+        out.printf(Locale.ROOT, "%nMedicines that expire within 30 days: %d%n",
                 expirationDateUntillThirtyDaysCount);
-        System.out.printf(Locale.ROOT,
-                "Price statistics: count=%d, sum=%.2f, average=%.2f, min=%.2f, max=%.2f%n",
-                priceStatistics.getCount(), priceStatistics.getSum(),
-                priceStatistics.getAverage(), priceStatistics.getMin(),
-                priceStatistics.getMax());
-        System.out.printf(Locale.ROOT, "Names of all medicines: %s%n", formatList(namesMap));
-        System.out.printf(Locale.ROOT,
+        out.printf(Locale.ROOT, "Price statistics: %s%n",
+                formatPriceStatistics(priceStatistics));
+        out.printf(Locale.ROOT, "Names of all medicines: %s%n", formatList(namesMap));
+        out.printf(Locale.ROOT,
                 "%nTop Five Medicine names with least expiration time: %s%n",
                 formatList(topFiveSmallestDaysToExpireNames));
 
-        countByForm.forEach((name, price) -> System.out.println(name + " -> " + price));
+        countByForm.forEach((name, price) -> out.println(name + " -> " + price));
         nameLookup.map(Medicine::getName)
-                .ifPresent(name -> System.out.printf(Locale.ROOT,
-                        "%nName lookup result: %s", name));
+                .ifPresent(name -> out.printf(Locale.ROOT,
+                        "%nName lookup result: %s%n", name));
     }
 
     /**
@@ -271,19 +314,36 @@ public final class Lab04Application {
     }
 
     /**
+     * Formats numeric statistics without exposing the collector's infinity
+     * sentinels for an empty source collection.
+     *
+     * @param statistics summary statistics
+     * @return deterministic locale-independent representation
+     */
+    public static String formatPriceStatistics(DoubleSummaryStatistics statistics) {
+        if (statistics.getCount() == 0) {
+            return "count=0, sum=0.00, average=0.00, min=N/A, max=N/A";
+        }
+        return String.format(Locale.ROOT,
+                "count=%d, sum=%.2f, average=%.2f, min=%.2f, max=%.2f",
+                statistics.getCount(), statistics.getSum(), statistics.getAverage(),
+                statistics.getMin(), statistics.getMax());
+    }
+
+    /**
      * Represents either a successfully parsed medicine or a row-level error.
      *
      * @param rowNumber one-based input row number
-     * @param medicine parsed medicine, or {@code null} for an invalid row
-     * @param error error message, or {@code null} for a valid row
+     * @param medicine  parsed medicine, or {@code null} for an invalid row
+     * @param error     error message, or {@code null} for a valid row
      */
-    record ParseResult(int rowNumber, Medicine medicine, String error) {
+    public record ParseResult(int rowNumber, Medicine medicine, String error) {
         /**
          * Checks whether parsing produced a medicine.
          *
          * @return {@code true} when the result is valid
          */
-        boolean isValid() {
+        public boolean isValid() {
             return medicine != null;
         }
     }
@@ -292,10 +352,10 @@ public final class Lab04Application {
      * Finds the first medicine with the requested name.
      *
      * @param medicines medicines to search
-     * @param name name to find
+     * @param name      name to find
      * @return the first matching medicine, or an empty optional when absent
      */
-    static Optional<Medicine> findByName(List<Medicine> medicines, String name) {
+    public static Optional<Medicine> findByName(List<Medicine> medicines, String name) {
         return medicines.stream()
                 .filter(medicine -> medicine.getName().equals(name))
                 .findFirst();
