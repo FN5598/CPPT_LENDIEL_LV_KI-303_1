@@ -92,3 +92,15 @@ The Lab 5 tests cover:
 
 GitHub Actions runs `./mvnw -B verify` on Ubuntu, Windows, and macOS with Java
 21 and uploads the generated executable JAR as an artifact.
+
+## Executable release JAR
+
+```bash
+./mvnw package
+java -jar target/CPPT_LAB_WORKS-5.0.0.jar --help
+java -jar target/CPPT_LAB_WORKS-5.0.0.jar --input data/input.csv --output target/lab05/export.csv
+```
+
+`--input` and `--output` can be used independently. Without `--input`,
+the application reads the bundled `Data.csv`. The input is the five-column semicolon-delimited medicine CSV. The output is the reflection-exported UTF-8 CSV. The older positional OUTPUT_CSV argument also works.
+The release branch CI runs on branch pushes and uploads a JAR for each OS.

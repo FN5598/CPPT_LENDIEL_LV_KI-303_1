@@ -3,11 +3,11 @@ package ua.lpnu.lendiel.vitalii.lab05;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
+import ua.lpnu.lendiel.vitalii.LabCli;
 import ua.lpnu.lendiel.vitalii.VersionInfo;
-import ua.lpnu.lendiel.vitalii.lab03.Lab03Application;
 import ua.lpnu.lendiel.vitalii.lab03.Medicine;
 import ua.lpnu.lendiel.vitalii.lab03.MedicineFactory;
 
@@ -28,25 +28,44 @@ public final class Lab05Application {
      * @param args optional first argument selecting the output CSV path
      */
     public static void main(String[] args) {
-        if (args.length == 1 && ("--help".equals(args[0]) || "-h".equals(args[0]))) {
-            System.out.println("Usage: lab05 [OUTPUT_CSV]\n"
-                    + "Default output: " + DEFAULT_OUTPUT);
-            return;
-        }
-        if (args.length == 1 && "--version".equals(args[0])) {
-            System.out.println(VersionInfo.labVersion("lab05"));
-            return;
-        }
-        if (args.length > 1) {
-            System.err.println("Usage: lab05 [OUTPUT_CSV]");
-            return;
-        }
-        Path output = args.length == 0 ? DEFAULT_OUTPUT : Path.of(args[0]);
+        final LabCli options;
+        final Path output;
         try {
-            List<Medicine> medicines = Arrays.stream(
-                    Lab03Application.getData(DATA_CSV_PATH))
-                    .map(MedicineFactory::fromCsv)
-                    .toList();
+            options = LabCli.parse(args);
+            if (options.positional().size() > 1
+                    || (options.output() != null && !options.positional().isEmpty())) {
+                throw new IllegalArgumentException("choose one output path");
+            }
+            if (options.help()) {
+                System.out.println("Usage: lab05 [--input PATH] [--output PATH] "
+                        + "[--help] [--version] [OUTPUT_CSV]\n"
+                        + "Default input: bundled Data.csv\n"
+                        + "Default output: " + DEFAULT_OUTPUT);
+                return;
+            }
+            if (options.version()) {
+                System.out.println(VersionInfo.labVersion("lab05"));
+                return;
+            }
+            output = options.output() != null ? options.output()
+                    : options.positional().isEmpty() ? DEFAULT_OUTPUT
+                    : Path.of(options.positional().get(0));
+        } catch (IllegalArgumentException exception) {
+            System.err.println("Argument error: " + exception.getMessage());
+            return;
+        }
+
+        try {
+            String[] lines = options.readLines(Lab05Application.class, DATA_CSV_PATH);
+            List<Medicine> medicines = new ArrayList<>();
+            for (int index = 0; index < lines.length; index++) {
+                try {
+                    medicines.add(MedicineFactory.fromCsv(lines[index]));
+                } catch (IllegalArgumentException exception) {
+                    System.err.println("Row %d: %s".formatted(index + 1,
+                            exception.getMessage()));
+                }
+            }
 
             Repository<MedicineRecord> repository = new Repository<>();
             medicines.stream()

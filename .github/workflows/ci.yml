@@ -5,6 +5,8 @@ on:
         branches:
             - main
     push:
+        branches:
+            - 'release/lab05-v5.0.0'
         tags:
             - 'v*.*.*'
 
@@ -76,6 +78,6 @@ jobs:
               if: success()
               uses: actions/upload-artifact@v4
               with:
-                  name: jar-${{ matrix.os }}-${{ github.run_number }}
+                  name: jar-lab05-${{ matrix.os }}-${{ github.run_number }}
                   path: target/*.jar
                   if-no-files-found: error

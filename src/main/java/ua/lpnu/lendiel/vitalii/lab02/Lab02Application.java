@@ -11,6 +11,7 @@ import java.util.Objects;
 
 
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
+import ua.lpnu.lendiel.vitalii.LabCli;
 import ua.lpnu.lendiel.vitalii.VersionInfo;
 
 /**
@@ -285,26 +286,31 @@ public final class Lab02Application {
      *             arguments
      */
     public static void main(String[] args) {
-        if (args.length == 1 && "--version".equals(args[0])) {
-            System.out.println(VersionInfo.labVersion("lab02"));
-            return;
-        }
-        String[] lines;
-
         try {
-            lines = getData(DATA_CSV_PATH);
-        } catch (NoSuchFileException e) {
-            fail("Data file not found: " + DATA_CSV_PATH, e);
-            return;
-        } catch (AccessDeniedException e) {
-            fail("Cannot access data file: " + DATA_CSV_PATH, e);
-            return;
-        } catch (IOException e) {
-            fail("Could not read data file: " + DATA_CSV_PATH, e);
-            return;
+            LabCli options = LabCli.parse(args);
+            if (!options.positional().isEmpty()) {
+                throw new IllegalArgumentException("unexpected positional argument");
+            }
+            if (options.help()) {
+                System.out.println("Usage: lab02 [--input PATH] [--output PATH] [--help] [--version]");
+                return;
+            }
+            if (options.version()) {
+                System.out.println(VersionInfo.labVersion("lab02"));
+                return;
+            }
+            options.writeReport(buildReport(options.readLines(
+                    Lab02Application.class, DATA_CSV_PATH)));
+        } catch (IllegalArgumentException exception) {
+            System.err.println("Argument error: " + exception.getMessage());
+        } catch (IOException exception) {
+            System.err.println("Could not process input or output file: "
+                    + exception.getMessage());
         }
+    }
 
-        List<MedicineInformation> summaryOutput = new ArrayList<>();
+    private static String buildReport(String[] lines) {
+        List<MedicineInformation> valid = new ArrayList<>();
         List<String> errors = new ArrayList<>();
         double totalPrice = 0;
         int shortestExpirationPeriod = Integer.MAX_VALUE;
@@ -312,34 +318,34 @@ public final class Lab02Application {
 
         for (int index = 0; index < lines.length; index++) {
             try {
-                MedicineInformation medicineMetadata = MedicineInformation.fromCsv(lines[index]);
-                summaryOutput.add(medicineMetadata);
-  
-                if (medicineMetadata.getDaysToExpire() < shortestExpirationPeriod) {
-                    shortestExpirationPeriod = medicineMetadata.getDaysToExpire();
-                }
-
-                if (medicineMetadata.getIsPrescription()) {
+                MedicineInformation medicine = MedicineInformation.fromCsv(lines[index]);
+                valid.add(medicine);
+                shortestExpirationPeriod = Math.min(shortestExpirationPeriod,
+                        medicine.getDaysToExpire());
+                if (medicine.getIsPrescription()) {
                     prescriptionCount++;
                 }
-
-                totalPrice += medicineMetadata.getPrice();
-            } catch (IllegalArgumentException e) {
-                errors.add("Row %d: %s".formatted(index + 1, e.getMessage()));
+                totalPrice += medicine.getPrice();
+            } catch (IllegalArgumentException exception) {
+                errors.add("Row %d: %s".formatted(index + 1, exception.getMessage()));
             }
         }
 
-        int totalRows = summaryOutput.size();
-        double averagePrice = totalRows == 0 ? 0 : totalPrice / totalRows;
-
-        MedicineInformationSummary summary = new MedicineInformationSummary(averagePrice, shortestExpirationPeriod, prescriptionCount);
-
-        System.out.printf(Locale.ROOT, "Average medicine price: %.2f%n", summary.averagePrice());
-        System.out.printf(Locale.ROOT, "Shortest medicine expiration period: %d%n", summary.shortestExpirationPeriod());
-        System.out.printf(Locale.ROOT, "Total medicines that had prescription: %d%n", summary.prescriptionCount());
-        System.out.printf(Locale.ROOT, "Total correct rows: %d%n", summaryOutput.size());
-
-        System.out.printf(Locale.ROOT, "%n%n%nErrors: %d%n", errors.size());
-        errors.forEach(System.out::println);
+        double averagePrice = valid.isEmpty() ? 0 : totalPrice / valid.size();
+        MedicineInformationSummary summary = new MedicineInformationSummary(
+                averagePrice, shortestExpirationPeriod, prescriptionCount);
+        StringBuilder report = new StringBuilder();
+        report.append(String.format(Locale.ROOT, "Average medicine price: %.2f%n",
+                summary.averagePrice()));
+        report.append("Shortest medicine expiration period: ")
+                .append(summary.shortestExpirationPeriod()).append(System.lineSeparator());
+        report.append("Total medicines that had prescription: ")
+                .append(summary.prescriptionCount()).append(System.lineSeparator());
+        report.append("Total correct rows: ").append(valid.size())
+                .append(System.lineSeparator());
+        report.append(System.lineSeparator().repeat(3))
+                .append("Errors: ").append(errors.size()).append(System.lineSeparator());
+        errors.forEach(error -> report.append(error).append(System.lineSeparator()));
+        return report.toString();
     }
 }

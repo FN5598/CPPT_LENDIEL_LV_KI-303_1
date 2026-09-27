@@ -76,7 +76,7 @@ The output CSV is UTF-8 and contains the Ukrainian annotated header:
 
 ## Testing
 
-The combined suite currently contains 47 tests, covering positive, boundary,
+The combined suite currently contains 55 tests, covering positive, boundary,
 and negative cases. Lab 5 additionally verifies inherited annotated fields and
 rejects rows whose field count does not match the header.
 
@@ -99,7 +99,7 @@ java -jar target/CPPT_LAB_WORKS-5.0.0.jar
 `verify` executes JUnit and SpotBugs. The Maven JAR manifest now names
 `ua.lpnu.lendiel.vitalii.lab05.Lab05Application` as `Main-Class`, so the
 packaged artifact is directly executable. CI repeats `verify` on Ubuntu,
-Windows, and macOS and uploads the JAR artifact.
+Windows, and macOS, runs a separate package step, and uploads the JAR artifact.
 
 ## Academic integrity
 

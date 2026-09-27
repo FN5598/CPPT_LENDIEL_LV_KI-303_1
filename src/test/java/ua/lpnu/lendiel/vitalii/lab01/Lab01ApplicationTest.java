@@ -99,6 +99,29 @@ class Lab01ApplicationTest {
     }
 
     @Test
+    void mixedInvalidValuesNeverAffectStatistics() {
+        String report = Lab01Application.buildReport(List.of(
+                "Good;Pills;8;4;true",
+                "Too;few",
+                "Too;many;1;2;false;extra",
+                ";Pills;1;2;false",
+                "Bad;Liquid;-3;2;false",
+                "Bad;Liquid;NaN;2;false",
+                "Bad;Liquid;1;-2;false",
+                "Bad;Liquid;1;2;maybe",
+                "Second;Liquid;2;0;false"));
+
+        assertTrue(report.contains("Average price: 5.00"));
+        assertTrue(report.contains("Prescription count: 1"));
+        assertTrue(report.contains("Shortest expiration period: 0"));
+        assertTrue(report.contains("Total Rows: 2"));
+        assertEquals(7, report.lines().filter(line -> line.startsWith("Line ")).count());
+        for (int line = 2; line <= 8; line++) {
+            assertTrue(report.contains("Line " + line + ":"), "Missing error for line " + line);
+        }
+    }
+
+    @Test
     void rejectsNonFinitePrices() {
         assertThrows(IllegalArgumentException.class,
                 () -> Lab01Application.parseRow("Aspirin;Pills;NaN;2;false"));
