@@ -57,3 +57,15 @@ java -cp target/classes ua.lpnu.lendiel.vitalii.lab03.Lab03Application
 Expected statistics for the supplied data are an average price of `3.64`, a
 shortest expiration period of `1`, three prescription medicines, five valid
 rows, and one invalid row.
+
+## Executable release JAR
+
+```bash
+./mvnw package
+java -jar target/CPPT_LAB_WORKS-3.0.0.jar --help
+java -jar target/CPPT_LAB_WORKS-3.0.0.jar --input data/input.csv --output target/lab03/report.txt
+```
+
+`--input` and `--output` can be used independently. Without `--input`,
+the application reads the bundled `Data.csv`. The input is the five-column semicolon-delimited medicine CSV. The output is the UTF-8 text report.
+The release branch CI runs on branch pushes and uploads a JAR for each OS.

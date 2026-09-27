@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import ua.lpnu.lendiel.vitalii.VersionInfo;
 import ua.lpnu.lendiel.vitalii.lab01.Lab01Application;
+import ua.lpnu.lendiel.vitalii.LabCli;
+import ua.lpnu.lendiel.vitalii.VersionInfo;
 
 /**
- * Reads medicine rows into a polymorphic model and prints the Lab 02-compatible
- * summary report.
+ * Reads medicine rows into a polymorphic model and prints a summary report.
  */
 public final class Lab03Application {
     private static final String DATA_CSV_PATH = "/lab01/Data.csv";
@@ -21,25 +21,35 @@ public final class Lab03Application {
     }
 
     /**
-     * Loads the medicine resource, processes every valid row through the common
-     * {@link Medicine} type, and prints the existing summary format.
+     * Loads the medicine resource, validates every row, and prints the summary.
      *
      * @param args command-line arguments; no arguments are required
      */
     public static void main(String[] args) {
-        if (args.length == 1 && "--version".equals(args[0])) {
-            System.out.println(VersionInfo.labVersion("lab03"));
-            return;
-        }
-        String[] lines;
         try {
-            lines = getData(DATA_CSV_PATH);
+            LabCli options = LabCli.parse(args);
+            if (!options.positional().isEmpty()) {
+                throw new IllegalArgumentException("unexpected positional argument");
+            }
+            if (options.help()) {
+                System.out.println("Usage: lab03 [--input PATH] [--output PATH] [--help] [--version]");
+                return;
+            }
+            if (options.version()) {
+                System.out.println(VersionInfo.labVersion("lab03"));
+                return;
+            }
+            options.writeReport(buildReport(options.readLines(
+                    Lab03Application.class, DATA_CSV_PATH)));
+        } catch (IllegalArgumentException exception) {
+            System.err.println("Argument error: " + exception.getMessage());
         } catch (IOException exception) {
-            System.err.println("Could not read data file: " + DATA_CSV_PATH);
-            System.err.println(exception.getMessage());
-            return;
+            System.err.println("Could not process input or output file: "
+                    + exception.getMessage());
         }
+    }
 
+    private static String buildReport(String[] lines) {
         List<Medicine> medicines = new ArrayList<>();
         List<String> errors = new ArrayList<>();
         double totalPrice = 0;
@@ -62,8 +72,8 @@ public final class Lab03Application {
         }
 
         double averagePrice = medicines.isEmpty() ? 0 : totalPrice / medicines.size();
-        printSummary(averagePrice, shortestExpirationPeriod, prescriptionCount,
-                medicines.size(), errors);
+        return formatSummary(averagePrice, shortestExpirationPeriod,
+                prescriptionCount, medicines.size(), errors);
     }
 
     /**
@@ -84,15 +94,20 @@ public final class Lab03Application {
         }
     }
 
-    private static void printSummary(double averagePrice, int shortestExpirationPeriod,
+    private static String formatSummary(double averagePrice, int shortestExpirationPeriod,
             int prescriptionCount, int totalRows, List<String> errors) {
-        System.out.printf(Locale.ROOT, "Average medicine price: %.2f%n", averagePrice);
-        System.out.printf(Locale.ROOT,
-                "Shortest medicine expiration period: %d%n", shortestExpirationPeriod);
-        System.out.printf(Locale.ROOT,
-                "Total medicines that had prescription: %d%n", prescriptionCount);
-        System.out.printf(Locale.ROOT, "Total correct rows: %d%n", totalRows);
-        System.out.printf(Locale.ROOT, "%n%n%nErrors: %d%n", errors.size());
-        errors.forEach(System.out::println);
+        StringBuilder report = new StringBuilder();
+        report.append(String.format(Locale.ROOT, "Average medicine price: %.2f%n",
+                averagePrice));
+        report.append("Shortest medicine expiration period: ")
+                .append(shortestExpirationPeriod).append(System.lineSeparator());
+        report.append("Total medicines that had prescription: ")
+                .append(prescriptionCount).append(System.lineSeparator());
+        report.append("Total correct rows: ").append(totalRows)
+                .append(System.lineSeparator());
+        report.append(System.lineSeparator().repeat(3))
+                .append("Errors: ").append(errors.size()).append(System.lineSeparator());
+        errors.forEach(error -> report.append(error).append(System.lineSeparator()));
+        return report.toString();
     }
 }
