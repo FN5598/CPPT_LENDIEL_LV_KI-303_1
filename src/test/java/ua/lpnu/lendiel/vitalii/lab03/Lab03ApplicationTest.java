@@ -104,6 +104,35 @@ class Lab03ApplicationTest {
         }
 
         @Test
+        void rejectsEachInvalidCsvFieldWithItsExactMessage() {
+                assertFactoryError(";Pills;5;7;false", "Medicine name cannot be blank.");
+                assertFactoryError("Medicine;Capsule;5;7;false",
+                                "Medicine can only be in 2 forms \"Liquid\" or \"Pills\".");
+                assertFactoryError("Medicine;Pills;bad-price;7;false",
+                                "Numerical field has incorrect format.");
+                assertFactoryError("Medicine;Pills;NaN;7;false",
+                                "Medicine price or expiration days cannot be negative.");
+                assertFactoryError("Medicine;Pills;Infinity;7;false",
+                                "Medicine price or expiration days cannot be negative.");
+                assertFactoryError("Medicine;Pills;5;bad-days;false",
+                                "Numerical field has incorrect format.");
+                assertFactoryError("Medicine;Pills;-1;7;false",
+                                "Medicine price or expiration days cannot be negative.");
+                assertFactoryError("Medicine;Pills;5;-1;false",
+                                "Medicine price or expiration days cannot be negative.");
+                assertFactoryError("Medicine;Pills;5;7;maybe", "Invalid prescription value.");
+                assertFactoryError("Medicine;Pills;5;7;", "Invalid prescription value.");
+                assertFactoryError("Medicine;Pills;5;7", "Expected 5 columns");
+                assertFactoryError("Medicine;Pills;5;7;false;extra", "Expected 5 columns");
+        }
+
+        private static void assertFactoryError(String row, String expectedMessage) {
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                                () -> MedicineFactory.fromCsv(row));
+                assertEquals(expectedMessage, exception.getMessage());
+        }
+
+        @Test
         void loadsTheExpandedClasspathData() throws IOException {
                 String[] data = Lab03Application.getData("/lab01/Data.csv");
 

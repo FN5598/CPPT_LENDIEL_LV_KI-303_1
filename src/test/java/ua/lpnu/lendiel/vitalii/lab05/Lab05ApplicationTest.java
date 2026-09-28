@@ -228,6 +228,47 @@ class Lab05ApplicationTest {
                         MedicineRecord::fromFields));
     }
 
+    @Test
+    void importerRejectsRowsWithTooManyFieldsAndNamesTheWidthRequirement() throws Exception {
+        Path malformed = temporaryDirectory.resolve("too-many-fields.csv");
+        Files.writeString(malformed,
+                "придатність,форма,назва,рецепт,ціна\n"
+                        + "2026-01-01,Pills,Aspirin,true,1.25,unexpected",
+                StandardCharsets.UTF_8);
+
+        DataStorageException exception = assertThrows(DataStorageException.class,
+                () -> CsvImporter.read(malformed, MedicineRecord.class,
+                        MedicineRecord::fromFields));
+
+        assertTrue(exception.getMessage().contains("exactly 5 fields"));
+    }
+
+    @Test
+    void recordParserNamesTheInvalidFieldCategory() {
+        assertRecordError(List.of("2026-01-01", "Pills", "", "false", "1.00"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("2026-01-01", "Capsule", "Aspirin", "false", "1.00"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("2026-01-01", "Pills", "Aspirin", "yes", "1.00"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("2026-01-01", "Pills", "Aspirin", "false", "bad-price"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("2026-01-01", "Pills", "Aspirin", "false", "-1.00"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("2026-01-01", "Pills", "Aspirin", "false", "NaN"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("2026-01-01", "Pills", "Aspirin", "false", "Infinity"),
+                "Invalid MedicineRecord CSV value");
+        assertRecordError(List.of("not-a-date", "Pills", "Aspirin", "false", "1.00"),
+                "Invalid MedicineRecord CSV value");
+    }
+
+    private static void assertRecordError(List<String> fields, String expectedMessage) {
+        DataStorageException exception = assertThrows(DataStorageException.class,
+                () -> MedicineRecord.fromFields(fields), fields.toString());
+        assertEquals(expectedMessage, exception.getMessage());
+    }
+
     private static final class SampleRow {
         @CsvColumn("назва")
         private final String name;
