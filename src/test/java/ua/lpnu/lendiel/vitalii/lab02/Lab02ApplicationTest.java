@@ -64,6 +64,38 @@ class Lab02ApplicationTest {
     }
 
     @Test
+    void rejectsBlankFieldsNonFiniteNumbersAndInvalidFlags() {
+        for (String row : new String[] {
+                ";Pills;5;7;false", "Medicine;;5;7;false", "Medicine;Pills;;7;false",
+                "Medicine;Pills;5;;false", "Medicine;Pills;5;7;", "Medicine;Pills;NaN;7;false",
+                "Medicine;Pills;Infinity;7;false", "Medicine;Pills;5;7;yes",
+                "Medicine;Pills;5;7;false;extra", "Medicine;Pills;5;7"
+        }) {
+            assertThrows(IllegalArgumentException.class, () -> parseMedicine(row), row);
+        }
+    }
+
+    @Test
+    void rejectsEachInvalidCsvFieldIndependentlyWithItsValidationMessage() {
+        assertMedicineError(";Pills;5;7;false", "Name cannot be blank");
+        assertMedicineError("Medicine;Capsule;5;7;false",
+                "Medicine can only be in 2 forms \"Liquid\" or \"Pills\". Please use correct form.");
+        assertMedicineError("Medicine;Pills;bad-price;7;false", "Numerical field has incorrect format.");
+        assertMedicineError("Medicine;Pills;5;bad-days;false", "Numerical field has incorrect format.");
+        assertMedicineError("Medicine;Pills;-1;7;false",
+                "Medicine price or days untill expiration cannot be negative. Please use correct value.");
+        assertMedicineError("Medicine;Pills;5;-1;false",
+                "Medicine price or days untill expiration cannot be negative. Please use correct value.");
+        assertMedicineError("Medicine;Pills;5;7;unknown", "Invalid prescription value");
+    }
+
+    private static void assertMedicineError(String row, String expectedMessage) {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> parseMedicine(row), row);
+        assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
     void validatesSummaryValues() {
         assertNotNull(createSummary(0, Integer.MAX_VALUE, 0));
         assertThrows(IllegalArgumentException.class, () -> createSummary(-1, 1, 0));
