@@ -78,6 +78,54 @@ class Lab04ApplicationTest {
     }
 
     @Test
+    void pipelineExcludesInvalidRowsAndReportsExactFieldValidationMessages() {
+        String[][] cases = {
+            {";Pills;5;7;false", "Medicine name cannot be blank."},
+            {"Medicine;Capsule;5;7;false", "Medicine can only be in 2 forms \"Liquid\" or \"Pills\"."},
+            {"Medicine;Pills;bad-price;7;false", "Numerical field has incorrect format."},
+            {"Medicine;Pills;5;bad-days;false", "Numerical field has incorrect format."},
+            {"Medicine;Pills;-1;7;false", "Medicine price or expiration days cannot be negative."},
+            {"Medicine;Pills;5;-1;false", "Medicine price or expiration days cannot be negative."},
+            {"Medicine;Pills;5;7;maybe", "Invalid prescription value."}
+        };
+        String[] rows = Arrays.stream(cases).map(testCase -> testCase[0]).toArray(String[]::new);
+
+        List<Lab04Application.ParseResult> results = Lab04Application.parseLines(rows);
+
+        assertEquals(cases.length, results.size());
+        for (int index = 0; index < cases.length; index++) {
+            assertFalse(results.get(index).isValid());
+            assertEquals(index + 1, results.get(index).rowNumber());
+            assertEquals(cases[index][1], results.get(index).error());
+        }
+    }
+
+    @Test
+    void malformedRowsAreExcludedFromSummaryCalculations() {
+        List<Lab04Application.ParseResult> results = Lab04Application.parseLines(new String[] {
+            "Valid;Pills;10;0;true",
+            "Too;few;fields",
+            "Too;many;fields;1;false;extra",
+            ";Pills;1;1;false",
+            "BlankPrice;Pills;;1;false",
+            "NegativePrice;Pills;-1;1;false",
+            "NegativeExpiration;Liquid;1;-1;false",
+            "NotANumber;Liquid;price;1;false",
+            "BadFlag;Liquid;1;1;yes"
+        });
+        List<Medicine> valid = results.stream()
+                .filter(Lab04Application.ParseResult::isValid)
+                .map(Lab04Application.ParseResult::medicine)
+                .toList();
+
+        assertEquals(1, valid.size());
+        assertEquals("Valid", valid.get(0).getName());
+        assertEquals(10.0, Lab04Application.summarizePrices(valid).getAverage());
+        assertEquals(1, Lab04Application.countPrescriptionMedicines(valid));
+        assertEquals(8, results.stream().filter(result -> !result.isValid()).count());
+    }
+
+    @Test
     void namedQueriesReturnExpectedResults() throws IOException {
         List<Medicine> medicines = loadMedicines();
 
