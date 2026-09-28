@@ -117,4 +117,38 @@ class Lab01ApplicationTest {
         assertThrows(IllegalArgumentException.class,
                 () -> Lab01Application.parseRow("Aspirin;Pills;Infinity;2;false"));
     }
+
+    @Test
+    void rejectsMalformedRowsAndKeepsOnlyValidDataInStatistics() {
+        String report = Lab01Application.buildReport(List.of(
+                "Good;Pills;0;0;false", "Too;few;fields", "Too;many;fields;1;false;extra",
+                ";Pills;1;1;false", "BlankForm;;1;1;false", "BlankPrice;Pills;;1;false",
+                "BlankExpiration;Liquid;1;;false", "BlankPrescription;Liquid;1;1;",
+                "NegativePrice;Liquid;-0.01;1;false", "NegativeExpiration;Liquid;1;-1;false",
+                "BadNumber;Liquid;not-a-number;1;false", "BadPrescription;Pills;1;1;yes"));
+
+        assertTrue(report.contains("Total Rows: 1"));
+        assertTrue(report.contains("Average price: 0.00"));
+        assertTrue(report.contains("Prescription count: 0"));
+        for (int line = 2; line <= 12; line++) {
+            assertTrue(report.contains("Line " + line + ":"));
+        }
+    }
+
+    @Test
+    void rejectsEachInvalidFieldIndependentlyWithItsValidationMessage() {
+        assertRowError(";Pills;1;1;false", "name must not be blank");
+        assertRowError("Aspirin;Capsule;1;1;false", "form must be Liquid or Pills");
+        assertRowError("Aspirin;Pills;abc;1;false", "price and expiration must be numeric");
+        assertRowError("Aspirin;Pills;1;abc;false", "price and expiration must be numeric");
+        assertRowError("Aspirin;Pills;-1;1;false", "price must be finite and non-negative");
+        assertRowError("Aspirin;Pills;1;-1;false", "expiration must be non-negative");
+        assertRowError("Aspirin;Pills;1;1;yes", "prescription must be true or false");
+    }
+
+    private static void assertRowError(String row, String expectedMessage) {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> Lab01Application.parseRow(row));
+        assertEquals(expectedMessage, exception.getMessage());
+    }
 }
