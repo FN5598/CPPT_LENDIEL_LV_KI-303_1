@@ -12,6 +12,35 @@ permissions:
     contents: read
 
 jobs:
+    release-tag:
+        if: startsWith(github.ref, 'refs/tags/')
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.12"
+
+            - name: Validate release tag against Java or Python package version
+              run: |
+                  python - <<'PYTHON'
+                  import os
+                  import tomllib
+                  import xml.etree.ElementTree as ET
+                  from pathlib import Path
+
+                  java_version = ET.parse("pom.xml").findtext("{http://maven.apache.org/POM/4.0.0}version")
+                  with Path("src/main/python/lab06/pyproject.toml").open("rb") as source:
+                      python_version = tomllib.load(source)["project"]["version"]
+                  expected = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+                  if expected not in {java_version, python_version}:
+                      raise SystemExit(f"Tag {expected} does not match Java {java_version} or Python {python_version}")
+                  print(f"Validated release version {expected}")
+                  PYTHON
+
     verify:
         if: github.event_name == 'pull_request' && github.base_ref == 'main' || startsWith(github.ref, 'refs/tags/')
         strategy:
@@ -33,21 +62,6 @@ jobs:
 
             - name: Show CI build number
               run: echo "CI build ${{ github.run_number }}"
-
-            - name: Validate release tag on Unix
-              if: startsWith(github.ref, 'refs/tags/') && runner.os != 'Windows'
-              run: |
-                  expected="${GITHUB_REF_NAME#v}"
-                  actual=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
-                  test "$expected" = "$actual"
-
-            - name: Validate release tag on Windows
-              if: startsWith(github.ref, 'refs/tags/') && runner.os == 'Windows'
-              shell: pwsh
-              run: |
-                  $expected = $env:GITHUB_REF_NAME.Substring(1)
-                  $actual = (& .\mvnw.cmd -q help:evaluate -Dexpression=project.version -DforceStdout).Trim()
-                  if ($expected -ne $actual) { throw "Tag $expected does not match POM version $actual" }
 
             - name: Verify on Unix
               if: runner.os != 'Windows'
