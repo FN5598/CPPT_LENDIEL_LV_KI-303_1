@@ -1,0 +1,12 @@
+Pharmacy Register Report
+CSV records: 10
+Selection threshold: up to 30 days remaining, inclusive
+Selected records: 9
+Medicine count by form:
+  Liquid: 6
+  Pills: 3
+Unique forms: Liquid, Pills
+Nearest expiry: Pakistani (Pills), 1 day remaining
+Average price of selected medicines: 4.24
+Total days remaining: 82.00
+Total price: 38.20
