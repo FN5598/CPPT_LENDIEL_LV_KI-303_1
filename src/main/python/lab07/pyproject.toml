@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kzp-lab07-v11"
+version = "7.0.0"
+description = "Object-oriented pharmacy data report for CPPT Laboratory Work 7"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.8", "build>=1.2"]
+
+[project.scripts]
+lab07 = "lab07.cli:main"
+
+[tool.setuptools]
+packages = ["lab07", "lab07.data"]
+
+[tool.setuptools.package-dir]
+lab07 = "."
+"lab07.data" = "data"
+
+[tool.setuptools.package-data]
+"lab07.data" = ["*.csv", "*.txt"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = [".."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["build", "dist", ".venv", ".venv-wheel"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]
