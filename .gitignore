@@ -35,4 +35,14 @@ target/
 .idea/ 
 *.iml 
 .vscode/ 
- 
+
+# Python laboratory work
+/src/main/python/lab06/reports/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.venv-wheel/
+build/
+dist/
+*.egg-info/
