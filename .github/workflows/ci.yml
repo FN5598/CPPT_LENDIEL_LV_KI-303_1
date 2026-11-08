@@ -5,7 +5,7 @@ on:
     branches: [python]
   push:
     branches: [python]
-    tags: ["v*.*.*"]
+    tags: ["python-v*.*.*"]
 
 permissions:
   contents: read
