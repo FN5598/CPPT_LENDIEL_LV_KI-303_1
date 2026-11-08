@@ -150,7 +150,7 @@ def test_cli_version_does_not_require_paths(capsys) -> None:
         main(["--version"])
 
     assert exit_status.value.code == 0
-    assert capsys.readouterr().out.strip() == "python -m lab07 7.0.0"
+    assert capsys.readouterr().out.strip() == "python -m lab07 2.0.0"
 
 
 def test_cli_version_works_without_installed_metadata(monkeypatch, capsys) -> None:
@@ -164,7 +164,7 @@ def test_cli_version_works_without_installed_metadata(monkeypatch, capsys) -> No
         main(["--version"])
 
     assert exit_status.value.code == 0
-    assert capsys.readouterr().out.strip() == "python -m lab07 7.0.0"
+    assert capsys.readouterr().out.strip() == "python -m lab07 2.0.0"
 
 
 @pytest.mark.parametrize(
