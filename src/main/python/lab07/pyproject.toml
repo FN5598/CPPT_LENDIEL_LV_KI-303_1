@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kzp-lab07-v11"
-version = "7.0.0"
+version = "2.0.0"
 description = "Object-oriented pharmacy data report for CPPT Laboratory Work 7"
 requires-python = ">=3.11"
 dependencies = []
