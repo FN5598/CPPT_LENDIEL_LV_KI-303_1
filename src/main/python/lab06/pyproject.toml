@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kzp-lab06-v11"
+version = "6.0.0"
+description = "CSV pharmacy data report for CPPT Laboratory Work 6"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.8", "build>=1.2"]
+
+[tool.setuptools]
+packages = ["lab06"]
+
+[tool.setuptools.package-dir]
+lab06 = "."
+
+[tool.setuptools.package-data]
+lab06 = ["data/*.csv"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = [".."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["build", "dist", ".venv", ".venv-wheel"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]

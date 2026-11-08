@@ -1,0 +1,7 @@
+name,form,price,days_left,prescription
+"Vitamin C, effervescent",Pills,0,0,false
+Duplicate,Pills,5,30,true
+Duplicate,Pills,5,30,true
+Boundary,Liquid,2,31,false
+Free,Liquid,3,30,false
+Prescription,Pills,4,1,true
