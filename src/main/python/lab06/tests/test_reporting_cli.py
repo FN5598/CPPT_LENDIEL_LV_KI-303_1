@@ -150,7 +150,7 @@ def test_cli_version_does_not_require_paths(capsys) -> None:
         main(["--version"])
 
     assert exit_status.value.code == 0
-    assert capsys.readouterr().out.strip() == "python -m lab06 1.0.0"
+    assert capsys.readouterr().out.strip() == "python -m lab06 6.0.0"
 
 
 def test_cli_version_works_without_installed_metadata(monkeypatch, capsys) -> None:
@@ -164,7 +164,7 @@ def test_cli_version_works_without_installed_metadata(monkeypatch, capsys) -> No
         main(["--version"])
 
     assert exit_status.value.code == 0
-    assert capsys.readouterr().out.strip() == "python -m lab06 1.0.0"
+    assert capsys.readouterr().out.strip() == "python -m lab06 6.0.0"
 
 
 @pytest.mark.parametrize(
@@ -184,3 +184,40 @@ def test_cli_incomplete_or_mixed_paths_are_usage_errors(args, capsys) -> None:
 
     assert exit_status.value.code == 2
     assert "error:" in capsys.readouterr().err
+
+
+def test_cli_rejects_same_input_and_output_path_and_keeps_csv(tmp_path, capsys) -> None:
+    source = tmp_path / "medicines.csv"
+    original = (Path(__file__).parents[1] / "data" / "medicines.csv").read_bytes()
+    source.write_bytes(original)
+
+    assert main([str(source), str(source)]) == 2
+    assert "must differ" in capsys.readouterr().err
+    assert source.read_bytes() == original
+
+
+def test_cli_rejects_dotdot_alias_of_input_path_and_keeps_csv(tmp_path, capsys) -> None:
+    source = tmp_path / "medicines.csv"
+    original = (Path(__file__).parents[1] / "data" / "medicines.csv").read_bytes()
+    source.write_bytes(original)
+    (tmp_path / "sub").mkdir()
+    alias = tmp_path / "sub" / ".." / "medicines.csv"
+
+    assert main(["--input", str(source), "--output", str(alias)]) == 2
+    assert "must differ" in capsys.readouterr().err
+    assert source.read_bytes() == original
+
+
+def test_cli_rejects_symlink_to_input_path_and_keeps_csv(tmp_path, capsys) -> None:
+    source = tmp_path / "medicines.csv"
+    original = (Path(__file__).parents[1] / "data" / "medicines.csv").read_bytes()
+    source.write_bytes(original)
+    link = tmp_path / "link.csv"
+    try:
+        link.symlink_to(source)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform")
+
+    assert main(["--input", str(source), "--output", str(link)]) == 2
+    assert "must differ" in capsys.readouterr().err
+    assert source.read_bytes() == original
