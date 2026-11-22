@@ -19,6 +19,16 @@ def _package_version() -> str:
             return tomllib.load(source)["project"]["version"]
 
 
+def _same_file(first: Path, second: Path) -> bool:
+    """Return True when both paths point to the same file (symlinks and hard links included)."""
+    if first.resolve() == second.resolve():
+        return True
+    try:
+        return first.samefile(second)
+    except OSError:
+        return False
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Create the parser for input, output, and the variant threshold."""
     parser = argparse.ArgumentParser(
@@ -58,6 +68,9 @@ def main(argv: list[str] | None = None) -> int:
         args.output_report = args.output_path
     if args.input_csv is None or args.output_report is None:
         parser.error("provide --input CSV --output REPORT, or two positional paths")
+    if _same_file(args.input_csv, args.output_report):
+        print("Data error: output path must differ from the input CSV path", file=sys.stderr)
+        return 2
     try:
         records = load_records(args.input_csv)
         summary = make_summary(
