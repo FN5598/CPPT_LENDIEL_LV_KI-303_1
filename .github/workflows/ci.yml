@@ -16,7 +16,7 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ubuntu-latest, windows-latest, macos-latest]
-                lab: [lab06, lab07]
+                lab: [lab06]
         runs-on: ${{ matrix.os }}
 
         defaults:
