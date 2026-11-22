@@ -196,16 +196,28 @@ def test_cli_rejects_same_input_and_output_path_and_keeps_csv(tmp_path, capsys) 
     assert source.read_bytes() == original
 
 
-def test_cli_rejects_alias_of_input_path_and_keeps_csv(tmp_path, capsys) -> None:
+def test_cli_rejects_dotdot_alias_of_input_path_and_keeps_csv(tmp_path, capsys) -> None:
     source = tmp_path / "medicines.csv"
     original = (Path(__file__).parents[1] / "data" / "medicines.csv").read_bytes()
     source.write_bytes(original)
-    alias = tmp_path / "sub" / ".." / "medicines.csv"
     (tmp_path / "sub").mkdir()
-    link = tmp_path / "link.csv"
-    link.symlink_to(source)
+    alias = tmp_path / "sub" / ".." / "medicines.csv"
 
-    for output in (alias, link):
-        assert main(["--input", str(source), "--output", str(output)]) == 2
-        assert "must differ" in capsys.readouterr().err
-        assert source.read_bytes() == original
+    assert main(["--input", str(source), "--output", str(alias)]) == 2
+    assert "must differ" in capsys.readouterr().err
+    assert source.read_bytes() == original
+
+
+def test_cli_rejects_symlink_to_input_path_and_keeps_csv(tmp_path, capsys) -> None:
+    source = tmp_path / "medicines.csv"
+    original = (Path(__file__).parents[1] / "data" / "medicines.csv").read_bytes()
+    source.write_bytes(original)
+    link = tmp_path / "link.csv"
+    try:
+        link.symlink_to(source)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform")
+
+    assert main(["--input", str(source), "--output", str(link)]) == 2
+    assert "must differ" in capsys.readouterr().err
+    assert source.read_bytes() == original
